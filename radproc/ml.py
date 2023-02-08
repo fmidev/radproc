@@ -1,12 +1,10 @@
-# coding: utf-8
 """melting layer detection using scipy peak utilities"""
 
 import numpy as np
 import pandas as pd
 from scipy import signal
-from j24.tools import find
-from j24.math import weighted_median
-from radcomp.vertical import filtering
+from radproc.math import weighted_median
+from radproc import filtering
 
 
 H_MAX = 4200

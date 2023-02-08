@@ -1,9 +1,11 @@
-# coding: utf-8
 """
-Vertical profile classification
-@author: Jussi Tiira
 """
 import numpy as np
+
+
+def find(arr, value):
+    """find closest value using argmin"""
+    return abs(arr-value).argmin()
 
 
 def m2km(m, pos):
