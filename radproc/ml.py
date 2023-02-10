@@ -8,6 +8,7 @@ from radproc import filtering
 
 
 H_MAX = 4200
+SCALING_LIMITS = {'zh': (-10, 38), 'zdr': (0, 3.1), 'kdp': (0, 0.25)}
 
 
 def indicator(zdr_scaled, zh_scaled, rho, savgol_args=(35, 3)):
