@@ -3,10 +3,11 @@
 
 from sklearn import preprocessing
 
+from radproc.aliases import zh, zdr, kdp
 
-SCALING_LIMITS_SNOW = {'zh': (-10, 34), 'zdr': (0, 3.3), 'kdp': (0, 0.11)}
-SCALING_LIMITS_RAIN = {'zh': (-10, 38), 'zdr': (0, 3.1), 'kdp': (0, 0.25),
-                       'kdpg': (-0.005, 0.005)}
+
+SCALING_LIMITS_SNOW = {zh: (-10, 34), zdr: (0, 3.3), kdp: (0, 0.11)}
+SCALING_LIMITS_RAIN = {zh: (-10, 38), zdr: (0, 3.1), kdp: (0, 0.25)}
 
 
 def scale(data, param='zh', has_ml=False, inverse=False):
