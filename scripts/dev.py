@@ -1,7 +1,16 @@
 import os
 
 import pyart
+import numpy as np
 import matplotlib.pyplot as plt
+from scipy.ndimage import median_filter, uniform_filter
+
+from radproc.aliases import zh, zdr, rhohv, mli
+from radproc.preprocessing import RadarDataScaler
+from radproc.ml import ind
+
+
+FLTRD_SUFFIX = '_filtered'
 
 
 def plot_pseudo_rhi(radar, what='reflectivity_horizontal', direction=270, **kws):
@@ -34,6 +43,42 @@ def read_h5(filename, exclude_datasets=['dataset13'], **kws):
                                          **kws)
 
 
+def scale_field(radar, field, field_type=None, **kws):
+    if field_type is None:
+        field_type=field
+    copy = radar.fields[field]['data'].copy() # to be scaled
+    scaler = RadarDataScaler(field_type, **kws)
+    scaled = scaler.fit_transform(copy)
+    return scaled
+
+
+def ml_indicator(radar):
+    zh_scaled = scale_field(radar, zh)
+    zdr_scaled = scale_field(radar, zdr+FLTRD_SUFFIX, field_type=zdr)
+    rho = radar.fields[rhohv+FLTRD_SUFFIX]['data']
+    return ind(zdr_scaled, zh_scaled, rho)
+
+
+def add_ml_indicator(radar):
+    mlifield = radar.fields[zh].copy()
+    mlifield['data'] = ml_indicator(radar)
+    mlifield['long_name'] = 'Melting layer indicator'
+    mlifield['coordinates'] = radar.fields[zdr]['coordinates']
+    radar.add_field(mli, mlifield, replace_existing=True)
+
+
+def field_filter(field_data, filterfun=median_filter, **kws):
+    filtered = filterfun(field_data, **kws)
+    return np.ma.array(filtered, mask=field_data.mask)
+
+
+def filter_field(radar, fieldname, **kws):
+    sweeps = radar.sweep_number['data']
+    filtered = np.concatenate([field_filter(radar.get_field(n, fieldname), **kws) for n in sweeps])
+    filtered = np.ma.array(filtered, mask=radar.fields[fieldname]['data'].mask)
+    radar.add_field_like(fieldname, fieldname+FLTRD_SUFFIX, filtered, replace_existing=True)
+
+
 if __name__ == '__main__':
     plt.close('all')
     datadir = os.path.expanduser('~/data/pvol/')
@@ -42,5 +87,16 @@ if __name__ == '__main__':
     f_melt1 = os.path.join(datadir, '202206030010_fivih_PVOL.h5')
     r_nomelt1 = read_h5(f_nomelt1)
     r_melt1 = read_h5(f_melt1)
-    ax = plot_pseudo_rhi(r_melt1, what='cross_correlation_ratio', direction=90)
-    ax = plot_ppi(r_melt1, sweep=2, title_flag=False)
+    #ax0 = plot_pseudo_rhi(r_melt1, what='cross_correlation_ratio', direction=90)
+    axzh = plot_ppi(r_melt1, sweep=2, what=zh, title_flag=False)
+    axrho = plot_ppi(r_melt1, vmin=0.86, vmax=1, sweep=2, what=rhohv, title_flag=False)
+    axzdr = plot_ppi(r_melt1, sweep=2, what=zdr, title_flag=False)
+    filter_field(r_melt1, zdr, filterfun=median_filter, size=10, mode='wrap')
+    filter_field(r_melt1, rhohv, filterfun=median_filter, size=10, mode='wrap')
+    axzdrf = plot_ppi(r_melt1, sweep=2, what=zdr+FLTRD_SUFFIX, title_flag=False)
+    axrhof = plot_ppi(r_melt1, vmin=0.86, vmax=1, sweep=2, what=rhohv+FLTRD_SUFFIX, title_flag=False)
+    add_ml_indicator(r_melt1)
+    ax2 = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=2, what=mli, title_flag=False)
+    ax3 = plot_pseudo_rhi(r_melt1, vmin=0, vmax=10, what=mli)
+    filter_field(r_melt1, mli, filterfun=uniform_filter, size=(9,1), mode='wrap')
+    axf = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=2, what=mli+FLTRD_SUFFIX, title_flag=False)
