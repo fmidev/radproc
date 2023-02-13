@@ -4,6 +4,7 @@ import pyart
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.ndimage import median_filter, uniform_filter
+from scipy.signal import savgol_filter
 
 from radproc.aliases import zh, zdr, rhohv, mli
 from radproc.preprocessing import RadarDataScaler
@@ -76,7 +77,11 @@ def filter_field(radar, fieldname, **kws):
     sweeps = radar.sweep_number['data']
     filtered = np.concatenate([field_filter(radar.get_field(n, fieldname), **kws) for n in sweeps])
     filtered = np.ma.array(filtered, mask=radar.fields[fieldname]['data'].mask)
-    radar.add_field_like(fieldname, fieldname+FLTRD_SUFFIX, filtered, replace_existing=True)
+    if fieldname[-len(FLTRD_SUFFIX):] == FLTRD_SUFFIX:
+        fieldname_out = fieldname
+    else:
+        fieldname_out = fieldname+FLTRD_SUFFIX
+    radar.add_field_like(fieldname, fieldname_out, filtered, replace_existing=True)
 
 
 if __name__ == '__main__':
@@ -99,4 +104,5 @@ if __name__ == '__main__':
     ax2 = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=2, what=mli, title_flag=False)
     ax3 = plot_pseudo_rhi(r_melt1, vmin=0, vmax=10, what=mli)
     filter_field(r_melt1, mli, filterfun=uniform_filter, size=(9,1), mode='wrap')
+    filter_field(r_melt1, mli, filterfun=savgol_filter, window_length=60, polyorder=3, axis=1)
     axf = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=2, what=mli+FLTRD_SUFFIX, title_flag=False)
