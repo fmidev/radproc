@@ -8,13 +8,17 @@ from radproc import filtering
 
 
 H_MAX = 4200
-SCALING_LIMITS = {'zh': (-10, 38), 'zdr': (0, 3.1), 'kdp': (0, 0.25)}
 
 
-def indicator(zdr_scaled, zh_scaled, rho, savgol_args=(35, 3)):
-    """Calculate ML indicator."""
-    rho[rho < 0.86] = 0.86 # rho lower cap; free param
+def ind(zdr_scaled, zh_scaled, rho, rho_min=0.86):
+    rho[rho < rho_min] = rho_min # rho lower cap; free param
     mli = (1-rho)*(zdr_scaled+1)*zh_scaled*100
+    return mli
+
+
+def indicator(zdr_scaled, zh_scaled, rho, savgol_args=(35, 3), **kws):
+    """Calculate ML indicator."""
+    mli = ind(zdr_scaled, zh_scaled, rho, **kws)
     # TODO: check window_length
     mli = mli.apply(filtering.savgol_series, args=savgol_args)
     return mli
