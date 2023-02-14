@@ -10,6 +10,11 @@ from radproc import filtering
 H_MAX = 4200
 
 
+def find(arr, value):
+    """find closest value using argmin"""
+    return abs(arr-value).argmin()
+
+
 def ind(zdr_scaled, zh_scaled, rho, rho_min=0.86):
     rho[rho < rho_min] = rho_min # rho lower cap; free param
     mli = (1-rho)*(zdr_scaled+1)*zh_scaled*100
