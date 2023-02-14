@@ -2,13 +2,14 @@ import os
 
 import pyart
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.ndimage import median_filter, uniform_filter
-from scipy.signal import savgol_filter
+from scipy.signal import savgol_filter, find_peaks
 
 from radproc.aliases import zh, zdr, rhohv, mli
 from radproc.preprocessing import RadarDataScaler
-from radproc.ml import ind
+from radproc.ml import ind, ml_limits_raw
 
 
 FLTRD_SUFFIX = '_filtered'
@@ -106,3 +107,7 @@ if __name__ == '__main__':
     filter_field(r_melt1, mli, filterfun=uniform_filter, size=(9,1), mode='wrap')
     filter_field(r_melt1, mli, filterfun=savgol_filter, window_length=60, polyorder=3, axis=1)
     axf = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=2, what=mli+FLTRD_SUFFIX, title_flag=False)
+
+    mlifd = r_melt1.get_field(2, mli+FLTRD_SUFFIX)
+    df = pd.DataFrame(mlifd.T, index=r_melt1.get_gate_lat_lon_alt(2)[2][1])
+    bot, top = ml_limits_raw(df)
