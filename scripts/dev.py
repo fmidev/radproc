@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.ndimage import median_filter, uniform_filter
-from scipy.signal import savgol_filter, find_peaks
+from scipy.signal import savgol_filter
 
 from radproc.aliases import zh, zdr, rhohv, mli
 from radproc.preprocessing import RadarDataScaler
@@ -30,6 +30,12 @@ def plot_ppi(radar, sweep=0, what='reflectivity_horizontal', **kws):
     ppi = pyart.graph.RadarDisplay(radar)
     ppi.plot(what, sweep, ax=ax, **kws)
     return ax
+
+
+def plot_edge(radar, sweep, edge, ax, color='red'):
+    x = radar.get_gate_x_y_z(sweep)[0][edge.index.values, edge.gate]
+    y = radar.get_gate_x_y_z(sweep)[1][edge.index.values, edge.gate]
+    ax.scatter(x/1000, y/1000, marker=',', color=color, edgecolors='none', s=2)
 
 
 def read_h5(filename, exclude_datasets=['dataset13'], **kws):
@@ -85,6 +91,11 @@ def filter_field(radar, fieldname, **kws):
     radar.add_field_like(fieldname, fieldname_out, filtered, replace_existing=True)
 
 
+def ppi_altitude(radar, sweep):
+    """1D altitude vector along ray from PPI"""
+    return radar.get_gate_lat_lon_alt(sweep)[2][1]
+
+
 if __name__ == '__main__':
     plt.close('all')
     datadir = os.path.expanduser('~/data/pvol/')
@@ -104,10 +115,12 @@ if __name__ == '__main__':
     add_ml_indicator(r_melt1)
     ax2 = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=2, what=mli, title_flag=False)
     ax3 = plot_pseudo_rhi(r_melt1, vmin=0, vmax=10, what=mli)
-    filter_field(r_melt1, mli, filterfun=uniform_filter, size=(9,1), mode='wrap')
+    filter_field(r_melt1, mli, filterfun=uniform_filter, size=(20,1), mode='wrap')
     filter_field(r_melt1, mli, filterfun=savgol_filter, window_length=60, polyorder=3, axis=1)
     axf = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=2, what=mli+FLTRD_SUFFIX, title_flag=False)
 
     mlifd = r_melt1.get_field(2, mli+FLTRD_SUFFIX)
-    df = pd.DataFrame(mlifd.T, index=r_melt1.get_gate_lat_lon_alt(2)[2][1])
+    df = pd.DataFrame(mlifd.T, index=ppi_altitude(r_melt1, 2))
     bot, top = ml_limits_raw(df)
+    plot_edge(r_melt1, 2, bot, axf, color='red')
+    plot_edge(r_melt1, 2, top, axf, color='orange')
