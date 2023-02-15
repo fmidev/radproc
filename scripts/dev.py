@@ -9,7 +9,7 @@ from scipy.signal import savgol_filter
 
 from radproc.aliases import zh, zdr, rhohv, mli
 from radproc.preprocessing import RadarDataScaler
-from radproc.ml import ind, ml_limits_raw
+from radproc.ml import ind, ml_limits_raw, ml_limits, find
 
 
 FLTRD_SUFFIX = '_filtered'
@@ -96,6 +96,18 @@ def ppi_altitude(radar, sweep):
     return radar.get_gate_lat_lon_alt(sweep)[2][1]
 
 
+def get_field_df(radar, sweep, fieldname):
+    """radar field as DataFrame"""
+    field = radar.get_field(sweep, fieldname)
+    return pd.DataFrame(field.T, index=ppi_altitude(radar, sweep))
+
+
+def edge_gates(edge, height):
+    gates = edge.apply(lambda h: find(height, h))
+    gates.name = 'gate'
+    return pd.concat([edge, gates], axis=1)
+
+
 if __name__ == '__main__':
     sweep = 2
     plt.close('all')
@@ -116,12 +128,19 @@ if __name__ == '__main__':
     add_ml_indicator(r_melt1)
     ax2 = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli, title_flag=False)
     ax3 = plot_pseudo_rhi(r_melt1, vmin=0, vmax=10, what=mli)
-    filter_field(r_melt1, mli, filterfun=uniform_filter, size=(20,1), mode='wrap')
+    filter_field(r_melt1, mli, filterfun=uniform_filter, size=(30,1), mode='wrap')
     filter_field(r_melt1, mli, filterfun=savgol_filter, window_length=60, polyorder=3, axis=1)
+    axfr = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli+FLTRD_SUFFIX, title_flag=False)
     axf = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli+FLTRD_SUFFIX, title_flag=False)
 
-    mlifd = r_melt1.get_field(sweep, mli+FLTRD_SUFFIX)
-    df = pd.DataFrame(mlifd.T, index=ppi_altitude(r_melt1, sweep))
-    bot, top = ml_limits_raw(df)
+    mlidf = get_field_df(r_melt1, sweep, mli+FLTRD_SUFFIX)
+    rhodf = get_field_df(r_melt1, sweep, rhohv+FLTRD_SUFFIX)
+    botr, topr = ml_limits_raw(mlidf)
+    bot, top = ml_limits(mlidf, rhodf)
+    h = ppi_altitude(r_melt1, sweep)
+    bot = edge_gates(bot, h)
+    top = edge_gates(top, h)
+    plot_edge(r_melt1, sweep, botr, axfr, color='red')
+    plot_edge(r_melt1, sweep, topr, axfr, color='black')
     plot_edge(r_melt1, sweep, bot, axf, color='red')
     plot_edge(r_melt1, sweep, top, axf, color='black')
