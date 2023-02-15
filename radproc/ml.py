@@ -96,12 +96,25 @@ def _value_at(ind, values):
         return np.nan
 
 
+def _roundnan(ind, fill_value=-1):
+    """round with fill_value on ValueError"""
+    try:
+        return round(ind)
+    except ValueError:
+        return fill_value
+
+
 def limits_peak(peaksi, heights):
     """ML height range from MLI peaks"""
     edges = []
     for ips_label in ('left_ips', 'right_ips'):
         ips = get_peaksi_prop(peaksi, ips_label)
-        edges.append(ips.apply(_first_or_nan).apply(_value_at, args=(heights,)))
+        ilims = ips.apply(_first_or_nan)
+        ilims.name = 'gate'
+        lims = ilims.apply(_value_at, args=(heights,))
+        lims.name = 'height'
+        lims = pd.concat([lims, ilims.apply(_roundnan)], axis=1)
+        edges.append(lims)
     return tuple(edges)
 
 
