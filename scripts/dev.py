@@ -25,10 +25,13 @@ def plot_pseudo_rhi(radar, what='reflectivity_horizontal', direction=270, **kws)
     return ax
 
 
-def plot_ppi(radar, sweep=0, what='reflectivity_horizontal', **kws):
+def plot_ppi(radar, sweep=0, what='reflectivity_horizontal', r_km=120, **kws):
     fig, ax = plt.subplots()
     ppi = pyart.graph.RadarDisplay(radar)
     ppi.plot(what, sweep, ax=ax, **kws)
+    ax.axis('equal')
+    ax.set_xlim(-r_km, r_km)
+    ax.set_ylim(-r_km, r_km)
     return ax
 
 
