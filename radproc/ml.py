@@ -139,9 +139,11 @@ def fltr_ml_limits(limits, rho):
 
 def ml_limits(mli, rho, **kws):
     """filtered ml bottom and top heights"""
-    lims = ml_limits_raw(mli, **kws)
+    limdfs = ml_limits_raw(mli, **kws)
+    lims = tuple((df.height for df in limdfs))
     # filter based on rel_height sensitivity
-    lims05 = ml_limits_raw(mli, rel_height=0.5) # free param
+    lim05dfs = ml_limits_raw(mli, rel_height=0.5) # free param
+    lims05 = tuple((df.height for df in lim05dfs))
     for lim, lim05 in zip(lims, lims05):
         lim[abs(lim-lim05) > 800] = np.nan # free param
     return fltr_ml_limits(lims, rho)
