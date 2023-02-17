@@ -111,6 +111,11 @@ def edge_gates(edge, height):
     return pd.concat([edge, gates], axis=1)
 
 
+def filter_series_skipna(s, filterfun, **kws):
+    data = filterfun(s.dropna(), **kws)
+    return pd.Series(data=data, index=s.dropna().index).reindex(s.index)
+
+
 if __name__ == '__main__':
     sweep = 2
     plt.close('all')
@@ -135,6 +140,7 @@ if __name__ == '__main__':
     filter_field(r_melt1, mli, filterfun=savgol_filter, window_length=60, polyorder=3, axis=1)
     axfr = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli+FLTRD_SUFFIX, title_flag=False)
     axf = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli+FLTRD_SUFFIX, title_flag=False)
+    axff = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli+FLTRD_SUFFIX, title_flag=False)
 
     mlidf = get_field_df(r_melt1, sweep, mli+FLTRD_SUFFIX)
     rhodf = get_field_df(r_melt1, sweep, rhohv+FLTRD_SUFFIX)
@@ -143,7 +149,13 @@ if __name__ == '__main__':
     h = ppi_altitude(r_melt1, sweep)
     bot = edge_gates(bot, h)
     top = edge_gates(top, h)
+    botfh = filter_series_skipna(bot.height, uniform_filter, size=30, mode='wrap')
+    topfh = filter_series_skipna(top.height, uniform_filter, size=30, mode='wrap')
+    botf = edge_gates(botfh, h)
+    topf = edge_gates(topfh, h)
     plot_edge(r_melt1, sweep, botr, axfr, color='red')
     plot_edge(r_melt1, sweep, topr, axfr, color='black')
     plot_edge(r_melt1, sweep, bot, axf, color='red')
     plot_edge(r_melt1, sweep, top, axf, color='black')
+    plot_edge(r_melt1, sweep, botf, axff, color='red')
+    plot_edge(r_melt1, sweep, topf, axff, color='black')
