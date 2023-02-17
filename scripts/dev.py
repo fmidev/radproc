@@ -112,8 +112,13 @@ def edge_gates(edge, height):
 
 
 def filter_series_skipna(s, filterfun, **kws):
-    data = filterfun(s.dropna(), **kws)
-    return pd.Series(data=data, index=s.dropna().index).reindex(s.index)
+    filler = s.rolling(40, center=True, min_periods=5).mean()
+    filled = s.copy()
+    filled[s.isna()] = filler[s.isna()]
+    data = filterfun(filled.dropna(), **kws)
+    data = data[-s.isna()]
+    idx = s.dropna().index
+    return pd.Series(data=data, index=idx).reindex(s.index)
 
 
 if __name__ == '__main__':
