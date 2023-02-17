@@ -55,6 +55,7 @@ def read_h5(filename, exclude_datasets=['dataset13'], **kws):
 
 
 def scale_field(radar, field, field_type=None, **kws):
+    """Scale radar field values using RadarDataScaler."""
     if field_type is None:
         field_type=field
     copy = radar.fields[field]['data'].copy() # to be scaled
@@ -71,6 +72,7 @@ def ml_indicator(radar):
 
 
 def add_ml_indicator(radar):
+    """Calculate and add ML indicator field to Radar object."""
     mlifield = radar.fields[zh].copy()
     mlifield['data'] = ml_indicator(radar)
     mlifield['long_name'] = 'Melting layer indicator'
@@ -84,6 +86,7 @@ def field_filter(field_data, filterfun=median_filter, **kws):
 
 
 def filter_field(radar, fieldname, **kws):
+    """Apply filter function to radar field sweep-by-sweep."""
     sweeps = radar.sweep_number['data']
     filtered = np.concatenate([field_filter(radar.get_field(n, fieldname), **kws) for n in sweeps])
     filtered = np.ma.array(filtered, mask=radar.fields[fieldname]['data'].mask)
@@ -106,12 +109,15 @@ def get_field_df(radar, sweep, fieldname):
 
 
 def edge_gates(edge, height):
+    """Find gate numbers corresponding to given altitudes."""
     gates = edge.apply(lambda h: find(height, h))
     gates.name = 'gate'
     return pd.concat([edge, gates], axis=1)
 
 
 def filter_series_skipna(s, filterfun, **kws):
+    """Filter Series handling nan values."""
+    # fill edges of nans with rolling mean values
     filler = s.rolling(40, center=True, min_periods=5).mean()
     filled = s.copy()
     filled[s.isna()] = filler[s.isna()]
@@ -164,3 +170,5 @@ if __name__ == '__main__':
     plot_edge(r_melt1, sweep, top, axf, color='black')
     plot_edge(r_melt1, sweep, botf, axff, color='red')
     plot_edge(r_melt1, sweep, topf, axff, color='black')
+    plot_edge(r_melt1, sweep, botf, axrho, color='blue')
+    plot_edge(r_melt1, sweep, topf, axrho, color='black')
