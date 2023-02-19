@@ -25,10 +25,11 @@ def plot_pseudo_rhi(radar, what='reflectivity_horizontal', direction=270, **kws)
     return ax
 
 
-def plot_ppi(radar, sweep=0, what='reflectivity_horizontal', r_km=120, **kws):
+def plot_ppi(radar, sweep=0, what='reflectivity_horizontal', r_km=120,
+             title_flag=False, **kws):
     fig, ax = plt.subplots()
     ppi = pyart.graph.RadarDisplay(radar)
-    ppi.plot(what, sweep, ax=ax, **kws)
+    ppi.plot(what, sweep, ax=ax, title_flag=title_flag, **kws)
     ax.axis('equal')
     ax.set_xlim(-r_km, r_km)
     ax.set_ylim(-r_km, r_km)
@@ -130,6 +131,7 @@ def filter_series_skipna(s, filterfun, **kws):
 
 if __name__ == '__main__':
     sweep = 2
+    mlif = mli+FLTRD_SUFFIX
     plt.close('all')
     datadir = os.path.expanduser('~/data/pvol/')
     f_nomelt1 = os.path.join(datadir, '202302051845_fivih_PVOL.h5')
@@ -138,23 +140,23 @@ if __name__ == '__main__':
     r_nomelt1 = read_h5(f_nomelt1)
     r_melt1 = read_h5(f_melt1)
     #ax0 = plot_pseudo_rhi(r_melt1, what='cross_correlation_ratio', direction=90)
-    axzh = plot_ppi(r_melt1, sweep=sweep, what=zh, title_flag=False)
-    axrho = plot_ppi(r_melt1, vmin=0.86, vmax=1, sweep=sweep, what=rhohv, title_flag=False)
-    axzdr = plot_ppi(r_melt1, sweep=sweep, what=zdr, title_flag=False)
+    axzh = plot_ppi(r_melt1, sweep=sweep, what=zh)
+    axrho = plot_ppi(r_melt1, vmin=0.86, vmax=1, sweep=sweep, what=rhohv)
+    axzdr = plot_ppi(r_melt1, sweep=sweep, what=zdr)
     filter_field(r_melt1, zdr, filterfun=median_filter, size=10, mode='wrap')
     filter_field(r_melt1, rhohv, filterfun=median_filter, size=10, mode='wrap')
-    axzdrf = plot_ppi(r_melt1, sweep=sweep, what=zdr+FLTRD_SUFFIX, title_flag=False)
-    axrhof = plot_ppi(r_melt1, vmin=0.86, vmax=1, sweep=sweep, what=rhohv+FLTRD_SUFFIX, title_flag=False)
+    axzdrf = plot_ppi(r_melt1, sweep=sweep, what=zdr+FLTRD_SUFFIX)
+    axrhof = plot_ppi(r_melt1, vmin=0.86, vmax=1, sweep=sweep, what=rhohv+FLTRD_SUFFIX)
     add_ml_indicator(r_melt1)
-    ax2 = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli, title_flag=False)
+    ax2 = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli)
     ax3 = plot_pseudo_rhi(r_melt1, vmin=0, vmax=10, what=mli)
     filter_field(r_melt1, mli, filterfun=uniform_filter, size=(30,1), mode='wrap')
     filter_field(r_melt1, mli, filterfun=savgol_filter, window_length=60, polyorder=3, axis=1)
-    axfr = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli+FLTRD_SUFFIX, title_flag=False)
-    axf = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli+FLTRD_SUFFIX, title_flag=False)
-    axff = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli+FLTRD_SUFFIX, title_flag=False)
+    axfr = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mlif)
+    axf = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mlif)
+    axff = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mlif)
 
-    mlidf = get_field_df(r_melt1, sweep, mli+FLTRD_SUFFIX)
+    mlidf = get_field_df(r_melt1, sweep, mlif)
     rhodf = get_field_df(r_melt1, sweep, rhohv+FLTRD_SUFFIX)
     botr, topr = ml_limits_raw(mlidf)
     bot, top = ml_limits(mlidf, rhodf)
