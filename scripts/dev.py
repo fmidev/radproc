@@ -122,9 +122,10 @@ def filter_series_skipna(s, filterfun, **kws):
     filled = s.copy()
     filled[s.isna()] = filler[s.isna()]
     data = filterfun(filled.dropna(), **kws)
-    data = data[-s.isna()]
-    idx = s.dropna().index
-    return pd.Series(data=data, index=idx).reindex(s.index)
+    df = pd.Series(data=data, index=filled.dropna().index)
+    df = df.reindex(s.index)
+    df[s.isna()] = np.nan
+    return df
 
 
 if __name__ == '__main__':
