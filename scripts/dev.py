@@ -65,17 +65,17 @@ def scale_field(radar, field, field_type=None, **kws):
     return scaled
 
 
-def ml_indicator(radar):
+def _ml_indicator(radar):
     zh_scaled = scale_field(radar, zh)
     zdr_scaled = scale_field(radar, zdr+FLTRD_SUFFIX, field_type=zdr)
     rho = radar.fields[rhohv+FLTRD_SUFFIX]['data']
     return ind(zdr_scaled, zh_scaled, rho)
 
 
-def add_ml_indicator(radar):
+def _add_ml_indicator(radar):
     """Calculate and add ML indicator field to Radar object."""
     mlifield = radar.fields[zh].copy()
-    mlifield['data'] = ml_indicator(radar)
+    mlifield['data'] = _ml_indicator(radar)
     mlifield['long_name'] = 'Melting layer indicator'
     mlifield['coordinates'] = radar.fields[zdr]['coordinates']
     radar.add_field(mli, mlifield, replace_existing=True)
@@ -129,6 +129,15 @@ def filter_series_skipna(s, filterfun, **kws):
     return df
 
 
+def add_mli(radar):
+    """Add filtered melting layer indicator to Radar object."""
+    filter_field(radar, zdr, filterfun=median_filter, size=10, mode='wrap')
+    filter_field(radar, rhohv, filterfun=median_filter, size=10, mode='wrap')
+    _add_ml_indicator(radar)
+    filter_field(radar, mli, filterfun=uniform_filter, size=(30,1), mode='wrap')
+    filter_field(radar, mli, filterfun=savgol_filter, window_length=60, polyorder=3, axis=1)
+
+
 if __name__ == '__main__':
     sweep = 2
     mlif = mli+FLTRD_SUFFIX
@@ -139,22 +148,16 @@ if __name__ == '__main__':
     f_melt1 = os.path.join(datadir, '202206030010_fivih_PVOL.h5')
     r_nomelt1 = read_h5(f_nomelt1)
     r_melt1 = read_h5(f_melt1)
+    add_mli(r_melt1)
     #ax0 = plot_pseudo_rhi(r_melt1, what='cross_correlation_ratio', direction=90)
     axzh = plot_ppi(r_melt1, sweep=sweep, what=zh)
     axrho = plot_ppi(r_melt1, vmin=0.86, vmax=1, sweep=sweep, what=rhohv)
     axzdr = plot_ppi(r_melt1, sweep=sweep, what=zdr)
-    filter_field(r_melt1, zdr, filterfun=median_filter, size=10, mode='wrap')
-    filter_field(r_melt1, rhohv, filterfun=median_filter, size=10, mode='wrap')
     axzdrf = plot_ppi(r_melt1, sweep=sweep, what=zdr+FLTRD_SUFFIX)
     axrhof = plot_ppi(r_melt1, vmin=0.86, vmax=1, sweep=sweep, what=rhohv+FLTRD_SUFFIX)
-    add_ml_indicator(r_melt1)
     ax2 = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli)
     ax3 = plot_pseudo_rhi(r_melt1, vmin=0, vmax=10, what=mli)
-    filter_field(r_melt1, mli, filterfun=uniform_filter, size=(30,1), mode='wrap')
-    filter_field(r_melt1, mli, filterfun=savgol_filter, window_length=60, polyorder=3, axis=1)
-    axfr = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mlif)
     axf = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mlif)
-    axff = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mlif)
 
     mlidf = get_field_df(r_melt1, sweep, mlif)
     rhodf = get_field_df(r_melt1, sweep, rhohv+FLTRD_SUFFIX)
@@ -167,11 +170,7 @@ if __name__ == '__main__':
     topfh = filter_series_skipna(top.height, uniform_filter, size=30, mode='wrap')
     botf = edge_gates(botfh, h)
     topf = edge_gates(topfh, h)
-    plot_edge(r_melt1, sweep, botr, axfr, color='red')
-    plot_edge(r_melt1, sweep, topr, axfr, color='black')
-    plot_edge(r_melt1, sweep, bot, axf, color='red')
-    plot_edge(r_melt1, sweep, top, axf, color='black')
-    plot_edge(r_melt1, sweep, botf, axff, color='red')
-    plot_edge(r_melt1, sweep, topf, axff, color='black')
+    plot_edge(r_melt1, sweep, botf, axf, color='red')
+    plot_edge(r_melt1, sweep, topf, axf, color='black')
     plot_edge(r_melt1, sweep, botf, axrho, color='blue')
     plot_edge(r_melt1, sweep, topf, axrho, color='black')
