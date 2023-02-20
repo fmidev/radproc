@@ -6,6 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.ndimage import median_filter, uniform_filter
 from scipy.signal import savgol_filter
+from mba import mba2
 
 from radproc.aliases import zh, zdr, rhohv, mli
 from radproc.preprocessing import RadarDataScaler
@@ -13,6 +14,26 @@ from radproc.ml import ind, ml_limits_raw, ml_limits, find
 
 
 FLTRD_SUFFIX = '_filtered'
+
+
+def interp_mba(xys, zs, m0, lo=-100, hi=100, resolution=50):
+    x = get_grid(lo, hi, resolution)
+    interp = mba2([lo, lo], [hi, hi], [m0, m0], xys, zs)
+    return interp(x)
+
+
+def get_grid(*args):
+    s = np.linspace(*args)
+    return np.array(np.meshgrid(s, s)).transpose([1, 2, 0]).copy()
+
+
+def edge2cartesian(radar, edge, sweep):
+    xyz = radar.get_gate_x_y_z(sweep)
+    ed = edge.dropna()
+    xs = xyz[0][ed.index.values, ed.gate.values]/1000
+    ys = xyz[1][ed.index.values, ed.gate.values]/1000
+    zs = ed.height.values
+    return np.array(list(zip(xs, ys))), zs
 
 
 def plot_pseudo_rhi(radar, what='reflectivity_horizontal', direction=270, **kws):
@@ -174,3 +195,11 @@ if __name__ == '__main__':
     plot_edge(r_melt1, sweep, topf, axf, color='black')
     plot_edge(r_melt1, sweep, botf, axrho, color='blue')
     plot_edge(r_melt1, sweep, topf, axrho, color='black')
+
+    xys, zs = edge2cartesian(r_melt1, bot[5::10], sweep)
+    v = interp_mba(xys, zs, 2, resolution=50)
+    s = np.linspace(-100,100)
+    figm, axm = plt.subplots()
+    axm.pcolormesh(s, s, v)
+    plot_edge(r_melt1, sweep, bot, axm, color='red')
+    axm.axis('equal')
