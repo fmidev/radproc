@@ -189,6 +189,8 @@ if __name__ == '__main__':
     top = edge_gates(top, h)
     botfh = filter_series_skipna(bot.height, uniform_filter, size=30, mode='wrap')
     topfh = filter_series_skipna(top.height, uniform_filter, size=30, mode='wrap')
+    for edge in topfh, botfh:
+        edge.name = 'height'
     botf = edge_gates(botfh, h)
     topf = edge_gates(topfh, h)
     plot_edge(r_melt1, sweep, botf, axf, color='red')
@@ -196,10 +198,10 @@ if __name__ == '__main__':
     plot_edge(r_melt1, sweep, botf, axrho, color='blue')
     plot_edge(r_melt1, sweep, topf, axrho, color='black')
 
-    xys, zs = edge2cartesian(r_melt1, bot[5::10], sweep)
+    xys, zs = edge2cartesian(r_melt1, botf, sweep)
     v = interp_mba(xys, zs, 2, resolution=50)
     s = np.linspace(-100,100)
     figm, axm = plt.subplots()
     axm.pcolormesh(s, s, v)
-    plot_edge(r_melt1, sweep, bot, axm, color='red')
+    plot_edge(r_melt1, sweep, botf, axm, color='red')
     axm.axis('equal')
