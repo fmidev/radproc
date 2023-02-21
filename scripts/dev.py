@@ -59,11 +59,30 @@ def ml_ppi(radar, sweep):
     lims = {'bot': bot, 'top': top}
     h = ppi_altitude(r_melt1, sweep)
     ml_smooth = dict()
-    for limlabel in 'bot', 'top':
+    for limlabel in lims.keys():
         limfh = filter_series_skipna(lims[limlabel], uniform_filter, size=30, mode='wrap')
         limfh.name = 'height'
         ml_smooth[limlabel] = edge_gates(limfh, h)
     return ml_smooth['bot'], ml_smooth['top']
+
+
+def ml_grid(radar, sweeps=(2, 3), m0=2, **kws):
+    xys = dict(bot=[], top=[])
+    zs = dict(bot=[], top=[])
+    v = dict()
+    for sweep in sweeps:
+        bot, top = ml_ppi(radar, sweep)
+        lims = {'bot': bot, 'top': top}
+        for limlabel in lims.keys():
+            xy, z = edge2cartesian(radar, lims[limlabel], sweep)
+            xys[limlabel].append(xy)
+            zs[limlabel].append(z)
+    for limlabel in lims.keys():
+        xy = np.concatenate(xys[limlabel])
+        z = np.concatenate(zs[limlabel])
+        v[limlabel] = interp_mba(xy, z, m0, **kws)
+    return v['bot'], v['top']
+
 
 
 if __name__ == '__main__':
@@ -89,6 +108,7 @@ if __name__ == '__main__':
     axf = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mlif)
     #
     bot, top = ml_ppi(r_melt1, sweep)
+    bot3, top3 = ml_ppi(r_melt1, 3)
     #
     plot_edge(r_melt1, sweep, bot, axf, color='red')
     plot_edge(r_melt1, sweep, top, axf, color='black')
@@ -102,3 +122,8 @@ if __name__ == '__main__':
     axm.pcolormesh(s, s, v)
     plot_edge(r_melt1, sweep, top, axm, color='red')
     axm.axis('equal')
+    vbot, vtop = ml_grid(r_melt1, resolution=50)
+    figv, axv = plt.subplots()
+    axv.pcolormesh(s, s, vtop)
+    plot_edge(r_melt1, sweep, top, axv, color='red')
+    plot_edge(r_melt1, sweep, top3, axv, color='red')
