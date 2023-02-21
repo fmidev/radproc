@@ -84,7 +84,6 @@ def ml_grid(radar, sweeps=(2, 3), m0=2, **kws):
     return v['bot'], v['top']
 
 
-
 if __name__ == '__main__':
     sweep = 2
     mlif = mli+FLTRD_SUFFIX
@@ -124,6 +123,8 @@ if __name__ == '__main__':
     axm.axis('equal')
     vbot, vtop = ml_grid(r_melt1, resolution=50)
     figv, axv = plt.subplots()
-    axv.pcolormesh(s, s, vtop)
+    mesh = axv.pcolormesh(s, s, vtop, cmap='gist_ncar')
     plot_edge(r_melt1, sweep, top, axv, color='red')
     plot_edge(r_melt1, sweep, top3, axv, color='red')
+    axv.axis('equal')
+    figv.colorbar(mesh)
