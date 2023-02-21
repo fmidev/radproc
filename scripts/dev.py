@@ -52,6 +52,20 @@ def edge_gates(edge, height):
     return pd.concat([edge, gates], axis=1)
 
 
+def ml_ppi(radar, sweep):
+    mlidf = get_field_df(radar, sweep, mlif)
+    rhodf = get_field_df(radar, sweep, rhohv+FLTRD_SUFFIX)
+    bot, top = ml_limits(mlidf, rhodf)
+    lims = {'bot': bot, 'top': top}
+    h = ppi_altitude(r_melt1, sweep)
+    ml_smooth = dict()
+    for limlabel in 'bot', 'top':
+        limfh = filter_series_skipna(lims[limlabel], uniform_filter, size=30, mode='wrap')
+        limfh.name = 'height'
+        ml_smooth[limlabel] = edge_gates(limfh, h)
+    return ml_smooth['bot'], ml_smooth['top']
+
+
 if __name__ == '__main__':
     sweep = 2
     mlif = mli+FLTRD_SUFFIX
@@ -74,25 +88,17 @@ if __name__ == '__main__':
     ax3 = plot_pseudo_rhi(r_melt1, vmin=0, vmax=10, what=mli)
     axf = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mlif)
     #
-    mlidf = get_field_df(r_melt1, sweep, mlif)
-    rhodf = get_field_df(r_melt1, sweep, rhohv+FLTRD_SUFFIX)
-    bot, top = ml_limits(mlidf, rhodf)
-    lims = {'bot': bot, 'top': top}
-    h = ppi_altitude(r_melt1, sweep)
-    ml_smooth = dict()
-    for limlabel in 'bot', 'top':
-        limfh = filter_series_skipna(lims[limlabel], uniform_filter, size=30, mode='wrap')
-        limfh.name = 'height'
-        ml_smooth[limlabel] = edge_gates(limfh, h)
-    plot_edge(r_melt1, sweep, ml_smooth['bot'], axf, color='red')
-    plot_edge(r_melt1, sweep, ml_smooth['top'], axf, color='black')
-    plot_edge(r_melt1, sweep, ml_smooth['bot'], axrho, color='blue')
-    plot_edge(r_melt1, sweep, ml_smooth['bot'], axrho, color='black')
+    bot, top = ml_ppi(r_melt1, sweep)
     #
-    xys, zs = edge2cartesian(r_melt1, ml_smooth['top'], sweep)
+    plot_edge(r_melt1, sweep, bot, axf, color='red')
+    plot_edge(r_melt1, sweep, top, axf, color='black')
+    plot_edge(r_melt1, sweep, bot, axrho, color='blue')
+    plot_edge(r_melt1, sweep, top, axrho, color='black')
+    #
+    xys, zs = edge2cartesian(r_melt1, top, sweep)
     v = interp_mba(xys, zs, 2, resolution=50)
     s = np.linspace(-100,100)
     figm, axm = plt.subplots()
     axm.pcolormesh(s, s, v)
-    plot_edge(r_melt1, sweep, ml_smooth['top'], axm, color='red')
+    plot_edge(r_melt1, sweep, top, axm, color='red')
     axm.axis('equal')
