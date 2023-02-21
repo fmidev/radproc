@@ -11,11 +11,9 @@ from mba import mba2
 from radproc.aliases import zh, zdr, rhohv, mli
 from radproc.preprocessing import RadarDataScaler
 from radproc.visual import plot_pseudo_rhi, plot_ppi, plot_edge
+from radproc.filtering import filter_field, filter_series_skipna, FLTRD_SUFFIX
 from radproc.io import read_h5
-from radproc.ml import ind, ml_limits_raw, ml_limits, find
-
-
-FLTRD_SUFFIX = '_filtered'
+from radproc.ml import ind, ml_limits, find
 
 
 def interp_mba(xys, zs, m0, lo=-100, hi=100, resolution=50):
@@ -64,23 +62,6 @@ def _add_ml_indicator(radar):
     radar.add_field(mli, mlifield, replace_existing=True)
 
 
-def field_filter(field_data, filterfun=median_filter, **kws):
-    filtered = filterfun(field_data, **kws)
-    return np.ma.array(filtered, mask=field_data.mask)
-
-
-def filter_field(radar, fieldname, **kws):
-    """Apply filter function to radar field sweep-by-sweep."""
-    sweeps = radar.sweep_number['data']
-    filtered = np.concatenate([field_filter(radar.get_field(n, fieldname), **kws) for n in sweeps])
-    filtered = np.ma.array(filtered, mask=radar.fields[fieldname]['data'].mask)
-    if fieldname[-len(FLTRD_SUFFIX):] == FLTRD_SUFFIX:
-        fieldname_out = fieldname
-    else:
-        fieldname_out = fieldname+FLTRD_SUFFIX
-    radar.add_field_like(fieldname, fieldname_out, filtered, replace_existing=True)
-
-
 def ppi_altitude(radar, sweep):
     """1D altitude vector along ray from PPI"""
     return radar.get_gate_lat_lon_alt(sweep)[2][1]
@@ -97,19 +78,6 @@ def edge_gates(edge, height):
     gates = edge.apply(lambda h: find(height, h))
     gates.name = 'gate'
     return pd.concat([edge, gates], axis=1)
-
-
-def filter_series_skipna(s, filterfun, **kws):
-    """Filter Series handling nan values."""
-    # fill edges of nans with rolling mean values
-    filler = s.rolling(40, center=True, min_periods=5).mean()
-    filled = s.copy()
-    filled[s.isna()] = filler[s.isna()]
-    data = filterfun(filled.dropna(), **kws)
-    df = pd.Series(data=data, index=filled.dropna().index)
-    df = df.reindex(s.index)
-    df[s.isna()] = np.nan
-    return df
 
 
 def add_mli(radar):
@@ -144,7 +112,6 @@ if __name__ == '__main__':
 
     mlidf = get_field_df(r_melt1, sweep, mlif)
     rhodf = get_field_df(r_melt1, sweep, rhohv+FLTRD_SUFFIX)
-    botr, topr = ml_limits_raw(mlidf)
     bot, top = ml_limits(mlidf, rhodf)
     h = ppi_altitude(r_melt1, sweep)
     bot = edge_gates(bot, h)

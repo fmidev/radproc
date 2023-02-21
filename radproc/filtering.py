@@ -12,6 +12,9 @@ MEDIAN_WINDOWS = {'ZH': (7, 1),
                   'ZDR': (11, 1),
                   'RHO': (25, 1)} # for nonmet filtering
 
+# constants
+FLTRD_SUFFIX = '_filtered'
+
 
 def dict_keys_lower(d):
     """list of dictionary keys in lower case"""
@@ -160,3 +163,31 @@ def fltr_rolling_median_thresh(s, window=6, threshold=10):
     return replace_values(s, cond)
 
 
+def filter_series_skipna(s, filterfun, **kws):
+    """Filter Series handling nan values."""
+    # fill edges of nans with rolling mean values
+    filler = s.rolling(40, center=True, min_periods=5).mean()
+    filled = s.copy()
+    filled[s.isna()] = filler[s.isna()]
+    data = filterfun(filled.dropna(), **kws)
+    df = pd.Series(data=data, index=filled.dropna().index)
+    df = df.reindex(s.index)
+    df[s.isna()] = np.nan
+    return df
+
+
+def _field_filter(field_data, filterfun=median_filter, **kws):
+    filtered = filterfun(field_data, **kws)
+    return np.ma.array(filtered, mask=field_data.mask)
+
+
+def filter_field(radar, fieldname, **kws):
+    """Apply filter function to radar field sweep-by-sweep."""
+    sweeps = radar.sweep_number['data']
+    filtered = np.concatenate([_field_filter(radar.get_field(n, fieldname), **kws) for n in sweeps])
+    filtered = np.ma.array(filtered, mask=radar.fields[fieldname]['data'].mask)
+    if fieldname[-len(FLTRD_SUFFIX):] == FLTRD_SUFFIX:
+        fieldname_out = fieldname
+    else:
+        fieldname_out = fieldname+FLTRD_SUFFIX
+    radar.add_field_like(fieldname, fieldname_out, filtered, replace_existing=True)
