@@ -23,6 +23,16 @@ def scale(data, param=zh, has_ml=True, inverse=False):
     return scaled
 
 
+def scale_field(radar, field, field_type=None, **kws):
+    """Scale radar field values using RadarDataScaler."""
+    if field_type is None:
+        field_type=field
+    copy = radar.fields[field]['data'].copy() # to be scaled
+    scaler = RadarDataScaler(field_type, **kws)
+    scaled = scaler.fit_transform(copy)
+    return scaled
+
+
 class RadarDataScaler(preprocessing.FunctionTransformer):
     """FunctionTransformer wrapper"""
 

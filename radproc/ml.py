@@ -2,7 +2,11 @@
 
 import numpy as np
 import pandas as pd
-from scipy import signal
+from scipy.signal import find_peaks, savgol_filter
+from scipy.ndimage import median_filter, uniform_filter
+
+from radproc.aliases import zh, zdr, rhohv, mli
+from radproc.preprocessing import scale_field
 from radproc.math import weighted_median
 from radproc import filtering
 
@@ -51,7 +55,7 @@ def ml_height_median(peaksi, peaks):
 
 def peak_series(s, ilim=(None, None), **kws):
     """scipy peak detection for Series objects"""
-    ind, props = signal.find_peaks(s, **kws)
+    ind, props = find_peaks(s, **kws)
     imin, imax = ilim
     up_sel, low_sel = tuple(np.ones(ind.shape).astype(bool) for i in range(2))
     if imin is not None:
@@ -165,3 +169,28 @@ def collapse2top(df_filled, top):
         raise ValueError('df_filled must not contain NaNs')
     mask = hseries2mask(top.interpolate().dropna(), df_filled.index)
     return df_filled[mask].apply(collapse)
+
+
+def _ml_indicator(radar):
+    zh_scaled = scale_field(radar, zh)
+    zdr_scaled = scale_field(radar, zdr+filtering.FLTRD_SUFFIX, field_type=zdr)
+    rho = radar.fields[rhohv+filtering.FLTRD_SUFFIX]['data']
+    return ind(zdr_scaled, zh_scaled, rho)
+
+
+def _add_ml_indicator(radar):
+    """Calculate and add ML indicator field to Radar object."""
+    mlifield = radar.fields[zh].copy()
+    mlifield['data'] = _ml_indicator(radar)
+    mlifield['long_name'] = 'Melting layer indicator'
+    mlifield['coordinates'] = radar.fields[zdr]['coordinates']
+    radar.add_field(mli, mlifield, replace_existing=True)
+
+
+def add_mli(radar):
+    """Add filtered melting layer indicator to Radar object."""
+    filtering.filter_field(radar, zdr, filterfun=median_filter, size=10, mode='wrap')
+    filtering.filter_field(radar, rhohv, filterfun=median_filter, size=10, mode='wrap')
+    _add_ml_indicator(radar)
+    filtering.filter_field(radar, mli, filterfun=uniform_filter, size=(30,1), mode='wrap')
+    filtering.filter_field(radar, mli, filterfun=savgol_filter, window_length=60, polyorder=3, axis=1)

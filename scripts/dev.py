@@ -4,16 +4,14 @@ import pyart
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.ndimage import median_filter, uniform_filter
-from scipy.signal import savgol_filter
+from scipy.ndimage import uniform_filter
 from mba import mba2
 
 from radproc.aliases import zh, zdr, rhohv, mli
-from radproc.preprocessing import RadarDataScaler
 from radproc.visual import plot_pseudo_rhi, plot_ppi, plot_edge
-from radproc.filtering import filter_field, filter_series_skipna, FLTRD_SUFFIX
+from radproc.filtering import filter_series_skipna, FLTRD_SUFFIX
 from radproc.io import read_h5
-from radproc.ml import ind, ml_limits, find
+from radproc.ml import ind, ml_limits, find, add_mli
 
 
 def interp_mba(xys, zs, m0, lo=-100, hi=100, resolution=50):
@@ -36,32 +34,6 @@ def edge2cartesian(radar, edge, sweep):
     return np.array(list(zip(xs, ys))), zs
 
 
-def scale_field(radar, field, field_type=None, **kws):
-    """Scale radar field values using RadarDataScaler."""
-    if field_type is None:
-        field_type=field
-    copy = radar.fields[field]['data'].copy() # to be scaled
-    scaler = RadarDataScaler(field_type, **kws)
-    scaled = scaler.fit_transform(copy)
-    return scaled
-
-
-def _ml_indicator(radar):
-    zh_scaled = scale_field(radar, zh)
-    zdr_scaled = scale_field(radar, zdr+FLTRD_SUFFIX, field_type=zdr)
-    rho = radar.fields[rhohv+FLTRD_SUFFIX]['data']
-    return ind(zdr_scaled, zh_scaled, rho)
-
-
-def _add_ml_indicator(radar):
-    """Calculate and add ML indicator field to Radar object."""
-    mlifield = radar.fields[zh].copy()
-    mlifield['data'] = _ml_indicator(radar)
-    mlifield['long_name'] = 'Melting layer indicator'
-    mlifield['coordinates'] = radar.fields[zdr]['coordinates']
-    radar.add_field(mli, mlifield, replace_existing=True)
-
-
 def ppi_altitude(radar, sweep):
     """1D altitude vector along ray from PPI"""
     return radar.get_gate_lat_lon_alt(sweep)[2][1]
@@ -78,15 +50,6 @@ def edge_gates(edge, height):
     gates = edge.apply(lambda h: find(height, h))
     gates.name = 'gate'
     return pd.concat([edge, gates], axis=1)
-
-
-def add_mli(radar):
-    """Add filtered melting layer indicator to Radar object."""
-    filter_field(radar, zdr, filterfun=median_filter, size=10, mode='wrap')
-    filter_field(radar, rhohv, filterfun=median_filter, size=10, mode='wrap')
-    _add_ml_indicator(radar)
-    filter_field(radar, mli, filterfun=uniform_filter, size=(30,1), mode='wrap')
-    filter_field(radar, mli, filterfun=savgol_filter, window_length=60, polyorder=3, axis=1)
 
 
 if __name__ == '__main__':
