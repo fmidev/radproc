@@ -113,13 +113,7 @@ if __name__ == '__main__':
     plot_edge(r_melt1, sweep, bot, axrho, color='blue')
     plot_edge(r_melt1, sweep, top, axrho, color='black')
     #
-    xys, zs = edge2cartesian(r_melt1, top, sweep)
-    v = interp_mba(xys, zs, 2, resolution=50)
     s = np.linspace(-100, 100)
-    figm, axm = plt.subplots()
-    axm.pcolormesh(s, s, v)
-    plot_edge(r_melt1, sweep, top, axm, color='red')
-    axm.axis('equal')
     vbot, vtop = ml_grid(r_melt1, resolution=50)
     figv, axv = plt.subplots()
     mesh = axv.pcolormesh(s, s, vtop, cmap='pyart_RefDiff')
