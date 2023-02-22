@@ -1,87 +1,16 @@
+"""melting layer detection development script"""
 import os
 
 import pyart
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.ndimage import uniform_filter
-from mba import mba2
 
 from radproc.aliases import zh, zdr, rhohv, mli
 from radproc.visual import plot_pseudo_rhi, plot_ppi, plot_edge
-from radproc.filtering import filter_series_skipna, FLTRD_SUFFIX
+from radproc.filtering import FLTRD_SUFFIX
 from radproc.io import read_h5
-from radproc.ml import ind, ml_limits, find, add_mli
-
-
-def interp_mba(xys, zs, m0=2, lo=-100, hi=100, resolution=50):
-    x = get_grid(lo, hi, resolution)
-    interp = mba2([lo, lo], [hi, hi], [m0, m0], xys, zs)
-    return interp(x)
-
-
-def get_grid(*args):
-    s = np.linspace(*args)
-    return np.array(np.meshgrid(s, s)).transpose([1, 2, 0]).copy()
-
-
-def edge2cartesian(radar, edge, sweep):
-    xyz = radar.get_gate_x_y_z(sweep)
-    ed = edge.dropna()
-    xs = xyz[0][ed.index.values, ed.gate.values]/1000
-    ys = xyz[1][ed.index.values, ed.gate.values]/1000
-    zs = ed.height.values
-    return np.array(list(zip(xs, ys))), zs
-
-
-def ppi_altitude(radar, sweep):
-    """1D altitude vector along ray from PPI"""
-    return radar.get_gate_lat_lon_alt(sweep)[2][1]
-
-
-def get_field_df(radar, sweep, fieldname):
-    """radar field as DataFrame"""
-    field = radar.get_field(sweep, fieldname)
-    return pd.DataFrame(field.T, index=ppi_altitude(radar, sweep))
-
-
-def edge_gates(edge, height):
-    """Find gate numbers corresponding to given altitudes."""
-    gates = edge.apply(lambda h: find(height, h))
-    gates.name = 'gate'
-    return pd.concat([edge, gates], axis=1)
-
-
-def ml_ppi(radar, sweep):
-    mlidf = get_field_df(radar, sweep, mlif)
-    rhodf = get_field_df(radar, sweep, rhohv+FLTRD_SUFFIX)
-    bot, top = ml_limits(mlidf, rhodf)
-    lims = {'bot': bot, 'top': top}
-    h = ppi_altitude(r_melt1, sweep)
-    ml_smooth = dict()
-    for limlabel in lims.keys():
-        limfh = filter_series_skipna(lims[limlabel], uniform_filter, size=30, mode='wrap')
-        limfh.name = 'height'
-        ml_smooth[limlabel] = edge_gates(limfh, h)
-    return ml_smooth['bot'], ml_smooth['top']
-
-
-def ml_grid(radar, sweeps=(2, 3), interpfun=interp_mba, **kws):
-    xys = dict(bot=[], top=[])
-    zs = dict(bot=[], top=[])
-    v = dict()
-    for sweep in sweeps:
-        bot, top = ml_ppi(radar, sweep)
-        lims = {'bot': bot, 'top': top}
-        for limlabel in lims.keys():
-            xy, z = edge2cartesian(radar, lims[limlabel], sweep)
-            xys[limlabel].append(xy)
-            zs[limlabel].append(z)
-    for limlabel in lims.keys():
-        xy = np.concatenate(xys[limlabel])
-        z = np.concatenate(zs[limlabel])
-        v[limlabel] = interpfun(xy, z, **kws)
-    return v['bot'], v['top']
+from radproc.ml import add_mli, ml_ppi, ml_grid
 
 
 if __name__ == '__main__':

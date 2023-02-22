@@ -7,8 +7,9 @@ from scipy.ndimage import median_filter, uniform_filter
 
 from radproc.aliases import zh, zdr, rhohv, mli
 from radproc.preprocessing import scale_field
-from radproc.math import weighted_median
-from radproc import filtering
+from radproc.math import weighted_median, interp_mba
+from radproc.radar import get_field_df, ppi_altitude
+from radproc.filtering import savgol_series, fltr_rolling_median_thresh, fltr_no_hydrometeors, filter_field, filter_series_skipna, FLTRD_SUFFIX
 
 
 H_MAX = 4200
@@ -29,7 +30,7 @@ def indicator(zdr_scaled, zh_scaled, rho, savgol_args=(35, 3), **kws):
     """Calculate ML indicator."""
     mli = ind(zdr_scaled, zh_scaled, rho, **kws)
     # TODO: check window_length
-    mli = mli.apply(filtering.savgol_series, args=savgol_args)
+    mli = mli.apply(savgol_series, args=savgol_args)
     return mli
 
 
@@ -134,8 +135,8 @@ def fltr_ml_limits(limits, rho):
     """filter ml range"""
     lims = []
     for lim in limits:
-        lim = filtering.fltr_rolling_median_thresh(lim, threshold=800) # free param
-        lim = filtering.fltr_no_hydrometeors(lim, rho)
+        lim = fltr_rolling_median_thresh(lim, threshold=800) # free param
+        lim = fltr_no_hydrometeors(lim, rho)
         lim = lim.rolling(5, center=True, win_type='triang', min_periods=2).mean()
         lims.append(lim)
     return lims
@@ -173,8 +174,8 @@ def collapse2top(df_filled, top):
 
 def _ml_indicator(radar):
     zh_scaled = scale_field(radar, zh)
-    zdr_scaled = scale_field(radar, zdr+filtering.FLTRD_SUFFIX, field_type=zdr)
-    rho = radar.fields[rhohv+filtering.FLTRD_SUFFIX]['data']
+    zdr_scaled = scale_field(radar, zdr+FLTRD_SUFFIX, field_type=zdr)
+    rho = radar.fields[rhohv+FLTRD_SUFFIX]['data']
     return ind(zdr_scaled, zh_scaled, rho)
 
 
@@ -189,8 +190,56 @@ def _add_ml_indicator(radar):
 
 def add_mli(radar):
     """Add filtered melting layer indicator to Radar object."""
-    filtering.filter_field(radar, zdr, filterfun=median_filter, size=10, mode='wrap')
-    filtering.filter_field(radar, rhohv, filterfun=median_filter, size=10, mode='wrap')
+    filter_field(radar, zdr, filterfun=median_filter, size=10, mode='wrap')
+    filter_field(radar, rhohv, filterfun=median_filter, size=10, mode='wrap')
     _add_ml_indicator(radar)
-    filtering.filter_field(radar, mli, filterfun=uniform_filter, size=(30,1), mode='wrap')
-    filtering.filter_field(radar, mli, filterfun=savgol_filter, window_length=60, polyorder=3, axis=1)
+    filter_field(radar, mli, filterfun=uniform_filter, size=(30,1), mode='wrap')
+    filter_field(radar, mli, filterfun=savgol_filter, window_length=60, polyorder=3, axis=1)
+
+
+def _edge2cartesian(radar, edge, sweep):
+    xyz = radar.get_gate_x_y_z(sweep)
+    ed = edge.dropna()
+    xs = xyz[0][ed.index.values, ed.gate.values]/1000
+    ys = xyz[1][ed.index.values, ed.gate.values]/1000
+    zs = ed.height.values
+    return np.array(list(zip(xs, ys))), zs
+
+
+def _edge_gates(edge, height):
+    """Find gate numbers corresponding to given altitudes."""
+    gates = edge.apply(lambda h: find(height, h))
+    gates.name = 'gate'
+    return pd.concat([edge, gates], axis=1)
+
+
+def ml_ppi(radar, sweep):
+    mlidf = get_field_df(radar, sweep, mli+FLTRD_SUFFIX)
+    rhodf = get_field_df(radar, sweep, rhohv+FLTRD_SUFFIX)
+    bot, top = ml_limits(mlidf, rhodf)
+    lims = {'bot': bot, 'top': top}
+    h = ppi_altitude(radar, sweep)
+    ml_smooth = dict()
+    for limlabel in lims.keys():
+        limfh = filter_series_skipna(lims[limlabel], uniform_filter, size=30, mode='wrap')
+        limfh.name = 'height'
+        ml_smooth[limlabel] = _edge_gates(limfh, h)
+    return ml_smooth['bot'], ml_smooth['top']
+
+
+def ml_grid(radar, sweeps=(2, 3), interpfun=interp_mba, **kws):
+    xys = dict(bot=[], top=[])
+    zs = dict(bot=[], top=[])
+    v = dict()
+    for sweep in sweeps:
+        bot, top = ml_ppi(radar, sweep)
+        lims = {'bot': bot, 'top': top}
+        for limlabel in lims.keys():
+            xy, z = _edge2cartesian(radar, lims[limlabel], sweep)
+            xys[limlabel].append(xy)
+            zs[limlabel].append(z)
+    for limlabel in lims.keys():
+        xy = np.concatenate(xys[limlabel])
+        z = np.concatenate(zs[limlabel])
+        v[limlabel] = interpfun(xy, z, **kws)
+    return v['bot'], v['top']
