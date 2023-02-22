@@ -14,7 +14,7 @@ from radproc.io import read_h5
 from radproc.ml import ind, ml_limits, find, add_mli
 
 
-def interp_mba(xys, zs, m0, lo=-100, hi=100, resolution=50):
+def interp_mba(xys, zs, m0=2, lo=-100, hi=100, resolution=50):
     x = get_grid(lo, hi, resolution)
     interp = mba2([lo, lo], [hi, hi], [m0, m0], xys, zs)
     return interp(x)
@@ -66,7 +66,7 @@ def ml_ppi(radar, sweep):
     return ml_smooth['bot'], ml_smooth['top']
 
 
-def ml_grid(radar, sweeps=(2, 3), m0=2, **kws):
+def ml_grid(radar, sweeps=(2, 3), interpfun=interp_mba, **kws):
     xys = dict(bot=[], top=[])
     zs = dict(bot=[], top=[])
     v = dict()
@@ -80,7 +80,7 @@ def ml_grid(radar, sweeps=(2, 3), m0=2, **kws):
     for limlabel in lims.keys():
         xy = np.concatenate(xys[limlabel])
         z = np.concatenate(zs[limlabel])
-        v[limlabel] = interp_mba(xy, z, m0, **kws)
+        v[limlabel] = interpfun(xy, z, **kws)
     return v['bot'], v['top']
 
 
