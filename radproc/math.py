@@ -1,11 +1,13 @@
 import numpy as np
 
 
-def interp_mba(xys, zs, m0=2, lo=-100, hi=100, resolution=50):
+def interp_mba(xys, zs, m0=2, lo=-100, hi=100, resolution=50, margin=1):
     """scattered data interpolation with multilevel B-splines"""
     from mba import mba2 # optional dependency
     x = _square_grid(lo, hi, resolution)
-    interp = mba2([lo, lo], [hi, hi], [m0, m0], xys, zs)
+    lom = lo-margin
+    him = hi+margin
+    interp = mba2([lom, lom], [him, him], [m0, m0], xys, zs)
     return interp(x)
 
 
