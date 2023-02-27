@@ -20,7 +20,8 @@ def find(arr, value):
     return abs(arr-value).argmin()
 
 
-def ind(zdr_scaled, zh_scaled, rho, rho_min=0.86):
+def indicator_formula(zdr_scaled, zh_scaled, rho, rho_min=0.86):
+    """melting layer indicator basic formula"""
     rho[rho < rho_min] = rho_min # rho lower cap; free param
     mli = (1-rho)*(zdr_scaled+1)*zh_scaled*100
     return mli
@@ -28,7 +29,7 @@ def ind(zdr_scaled, zh_scaled, rho, rho_min=0.86):
 
 def indicator(zdr_scaled, zh_scaled, rho, savgol_args=(35, 3), **kws):
     """Calculate ML indicator."""
-    mli = ind(zdr_scaled, zh_scaled, rho, **kws)
+    mli = indicator_formula(zdr_scaled, zh_scaled, rho, **kws)
     # TODO: check window_length
     mli = mli.apply(savgol_series, args=savgol_args)
     return mli
@@ -173,10 +174,11 @@ def collapse2top(df_filled, top):
 
 
 def _ml_indicator(radar):
+    """melting indicator from Radar object"""
     zh_scaled = scale_field(radar, zh)
     zdr_scaled = scale_field(radar, zdr+FLTRD_SUFFIX, field_type=zdr)
     rho = radar.fields[rhohv+FLTRD_SUFFIX]['data']
-    return ind(zdr_scaled, zh_scaled, rho)
+    return indicator_formula(zdr_scaled, zh_scaled, rho)
 
 
 def _add_ml_indicator(radar):

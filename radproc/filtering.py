@@ -176,7 +176,8 @@ def filter_series_skipna(s, filterfun, **kws):
     return df
 
 
-def _field_filter(field_data, filterfun=median_filter, **kws):
+def _ma_filter(field_data, filterfun=median_filter, **kws):
+    """Apply filterfun to a masked array retaining mask."""
     filtered = filterfun(field_data, **kws)
     return np.ma.array(filtered, mask=field_data.mask)
 
@@ -184,7 +185,7 @@ def _field_filter(field_data, filterfun=median_filter, **kws):
 def filter_field(radar, fieldname, **kws):
     """Apply filter function to radar field sweep-by-sweep."""
     sweeps = radar.sweep_number['data']
-    filtered = np.concatenate([_field_filter(radar.get_field(n, fieldname), **kws) for n in sweeps])
+    filtered = np.concatenate([_ma_filter(radar.get_field(n, fieldname), **kws) for n in sweeps])
     filtered = np.ma.array(filtered, mask=radar.fields[fieldname]['data'].mask)
     if fieldname[-len(FLTRD_SUFFIX):] == FLTRD_SUFFIX:
         fieldname_out = fieldname
