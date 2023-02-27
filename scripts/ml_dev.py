@@ -15,7 +15,6 @@ from radproc.ml import add_mli, ml_ppi, ml_grid
 
 if __name__ == '__main__':
     sweep = 2
-    mlif = mli+FLTRD_SUFFIX
     plt.close('all')
     datadir = os.path.expanduser('~/data/pvol/')
     f_nomelt1 = os.path.join(datadir, '202302051845_fivih_PVOL.h5')
@@ -32,7 +31,7 @@ if __name__ == '__main__':
     axrhof = plot_ppi(r_melt1, vmin=0.86, vmax=1, sweep=sweep, what=rhohv+FLTRD_SUFFIX)
     ax2 = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli)
     ax3 = plot_pseudo_rhi(r_melt1, vmin=0, vmax=10, what=mli)
-    axf = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mlif)
+    axf = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli+FLTRD_SUFFIX)
     #
     bot, top = ml_ppi(r_melt1, sweep)
     bot3, top3 = ml_ppi(r_melt1, 3)
