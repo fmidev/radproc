@@ -8,16 +8,12 @@ from scipy.ndimage import median_filter, uniform_filter
 from radproc.aliases import zh, zdr, rhohv, mli
 from radproc.preprocessing import scale_field
 from radproc.math import weighted_median, interp_mba
+from radproc.tools import find
 from radproc.radar import get_field_df, ppi_altitude
 from radproc.filtering import savgol_series, fltr_rolling_median_thresh, fltr_no_hydrometeors, filter_field, filter_series_skipna, FLTRD_SUFFIX
 
 
 H_MAX = 4200
-
-
-def find(arr, value):
-    """find closest value using argmin"""
-    return abs(arr-value).argmin()
 
 
 def indicator_formula(zdr_scaled, zh_scaled, rho, rho_min=0.86):

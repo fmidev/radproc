@@ -1,9 +1,7 @@
 """melting layer detection development script"""
 import os
 
-import pyart
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 
 from radproc.aliases import zh, zdr, rhohv, mli
