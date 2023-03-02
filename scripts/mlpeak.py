@@ -12,7 +12,7 @@ from radproc.ml import add_mli, ml_ppi
 
 
 if __name__ == '__main__':
-    sweep = 2
+    sweep = 3
     ray = 90
     plt.close('all')
     datadir = os.path.expanduser('~/data/pvol/')
@@ -33,7 +33,10 @@ if __name__ == '__main__':
     plot_edge(r_melt1, sweep, bot, axrho, color='blue')
     plot_edge(r_melt1, sweep, top, axrho, color='black')
     #
+    raw = r_melt1.get_field(sweep, mli)[ray]
     final = r_melt1.get_field(sweep, mli+FLTRD_SUFFIX)[ray]
     x = np.arange(final.size)
     fig1, ax1 = plt.subplots()
-    ax1.plot(x, final)
+    ax1.plot(x, raw, label='raw')
+    ax1.plot(x, final, label='filtered')
+    # TODO: ignore nearest gates

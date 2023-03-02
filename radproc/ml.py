@@ -10,7 +10,10 @@ from radproc.preprocessing import scale_field
 from radproc.math import weighted_median, interp_mba
 from radproc.tools import find
 from radproc.radar import get_field_df, ppi_altitude
-from radproc.filtering import savgol_series, fltr_rolling_median_thresh, fltr_no_hydrometeors, filter_field, filter_series_skipna, FLTRD_SUFFIX
+from radproc.filtering import (savgol_series, fltr_rolling_median_thresh,
+                               fltr_no_hydrometeors, filter_field,
+                               filter_series_skipna, fltr_ignore_head,
+                               FLTRD_SUFFIX)
 
 
 H_MAX = 4200
@@ -191,8 +194,9 @@ def add_mli(radar):
     filter_field(radar, zdr, filterfun=median_filter, size=10, mode='wrap')
     filter_field(radar, rhohv, filterfun=median_filter, size=10, mode='wrap')
     _add_ml_indicator(radar)
-    filter_field(radar, mli, filterfun=uniform_filter, size=(30,1), mode='wrap')
-    filter_field(radar, mli, filterfun=savgol_filter, window_length=60, polyorder=3, axis=1)
+    filter_field(radar, mli, filterfun=fltr_ignore_head, n=3)
+    filter_field(radar, mli+FLTRD_SUFFIX, filterfun=uniform_filter, size=(9,1), mode='wrap')
+    filter_field(radar, mli+FLTRD_SUFFIX, filterfun=savgol_filter, window_length=60, polyorder=3, axis=1)
 
 
 def _edge2cartesian(radar, edge, sweep):

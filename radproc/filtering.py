@@ -163,6 +163,12 @@ def fltr_rolling_median_thresh(s, window=6, threshold=10):
     return replace_values(s, cond)
 
 
+def fltr_ignore_head(arr, n=1):
+    arro = arr.copy()
+    arro.mask[:,:n] = True
+    return arro
+
+
 def filter_series_skipna(s, filterfun, **kws):
     """Filter Series handling nan values."""
     # fill edges of nans with rolling mean values
@@ -179,14 +185,17 @@ def filter_series_skipna(s, filterfun, **kws):
 def _ma_filter(field_data, filterfun=median_filter, **kws):
     """Apply filterfun to a masked array retaining mask."""
     filtered = filterfun(field_data, **kws)
+    if isinstance(filtered, np.ma.core.MaskedArray):
+        return filtered
     return np.ma.array(filtered, mask=field_data.mask)
 
 
 def filter_field(radar, fieldname, **kws):
     """Apply filter function to radar field sweep-by-sweep."""
     sweeps = radar.sweep_number['data']
-    filtered = np.concatenate([_ma_filter(radar.get_field(n, fieldname), **kws) for n in sweeps])
-    filtered = np.ma.array(filtered, mask=radar.fields[fieldname]['data'].mask)
+    filtered = np.ma.concatenate([_ma_filter(radar.get_field(n, fieldname), **kws) for n in sweeps])
+    if not filtered.mask.any():
+        filtered = np.ma.array(filtered, mask=radar.fields[fieldname]['data'].mask)
     if fieldname[-len(FLTRD_SUFFIX):] == FLTRD_SUFFIX:
         fieldname_out = fieldname
     else:
