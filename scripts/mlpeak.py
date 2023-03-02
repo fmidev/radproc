@@ -26,8 +26,7 @@ if __name__ == '__main__':
     axmli = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli)
     axf = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli+FLTRD_SUFFIX)
     #
-    bot, top = ml_ppi(r_melt1, sweep)
-    bot3, top3 = ml_ppi(r_melt1, 3)
+    bot, top = ml_ppi(r_melt1, sweep, ml_max_change=800)
     #
     plot_edge(r_melt1, sweep, bot, axf, color='red')
     plot_edge(r_melt1, sweep, top, axf, color='black')

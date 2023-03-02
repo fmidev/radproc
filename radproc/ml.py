@@ -212,11 +212,13 @@ def _edge_gates(edge, height):
     return pd.concat([edge, gates], axis=1)
 
 
-def ml_ppi(radar, sweep):
+def ml_ppi(radar, sweep, **kws):
     """smooth melting layer detection from a single sweep"""
-    mlidf = get_field_df(radar, sweep, mli+FLTRD_SUFFIX)
+    # Not filling mli nans with zeros sometimes causes peak depth misdetection.
+    # On the other hand, filling may produce unwanted extra peaks.
+    mlidf = get_field_df(radar, sweep, mli+FLTRD_SUFFIX).fillna(0)
     rhodf = get_field_df(radar, sweep, rhohv+FLTRD_SUFFIX)
-    bot, top = ml_limits(mlidf, rhodf)
+    bot, top = ml_limits(mlidf, rhodf, **kws)
     lims = {'bot': bot, 'top': top}
     h = ppi_altitude(radar, sweep)
     ml_smooth = dict()
@@ -229,11 +231,13 @@ def ml_ppi(radar, sweep):
 
 def ml_grid(radar, sweeps=(2, 3), interpfun=interp_mba, **kws):
     """melting layer height as a grid from a volume scan"""
+    # lower threshold when closer to radar (higher elevation)
+    max_h_change = {2: 800, 3: 300}
     xys = dict(bot=[], top=[])
     zs = dict(bot=[], top=[])
     v = dict()
     for sweep in sweeps:
-        bot, top = ml_ppi(radar, sweep)
+        bot, top = ml_ppi(radar, sweep, ml_max_change=max_h_change[sweep])
         lims = {'bot': bot, 'top': top}
         for limlabel in lims.keys():
             xy, z = _edge2cartesian(radar, lims[limlabel], sweep)
