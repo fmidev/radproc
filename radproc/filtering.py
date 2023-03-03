@@ -4,6 +4,7 @@ from scipy.signal import savgol_filter
 from scipy.ndimage.filters import median_filter
 
 from radproc import NAN_REPLACEMENT
+from radproc.radar import zgates_per_sweep
 
 
 # CONFIG
@@ -189,19 +190,24 @@ def _ma_filter(field_data, filterfun=median_filter, **kws):
         return filtered
     try:
         return np.ma.array(filtered, mask=field_data.mask)
-    except AttributeError:
+    except AttributeError: # field_data was not ma
         return np.ma.array(filtered, mask=False)
 
 
-def filter_field(radar, fieldname, filled=False, **kws):
+def filter_field(radar, fieldname, filled=False, zgate_kw=None, **kws):
     """Apply filter function to radar field sweep-by-sweep."""
     sweeps = radar.sweep_number['data']
+    zgates = zgates_per_sweep(radar)
     data = []
     for n in sweeps:
         sdata = radar.get_field(n, fieldname)
         if filled:
             sdata = sdata.filled(0)
-        data.append(_ma_filter(sdata, **kws))
+        if zgate_kw is None:
+            zkw = {}
+        else:
+            zkw = {zgate_kw: zgates[n]}
+        data.append(_ma_filter(sdata, **zkw, **kws))
     filtered = np.ma.concatenate(data)
     if not filtered.mask.any():
         filtered = np.ma.array(filtered, mask=radar.fields[fieldname]['data'].mask)

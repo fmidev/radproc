@@ -197,7 +197,7 @@ def add_mli(radar):
     filter_field(radar, mli, filterfun=fltr_ignore_head, n=3)
     filter_field(radar, mli+FLTRD_SUFFIX, filterfun=uniform_filter, size=(9,1), mode='wrap')
     filter_field(radar, mli+FLTRD_SUFFIX, filterfun=savgol_filter, filled=True,
-                 window_length=60, polyorder=3, axis=1)
+                 zgate_kw='window_length', polyorder=3, axis=1)
 
 
 def _edge2cartesian(radar, edge, sweep):
@@ -237,7 +237,7 @@ def ml_ppi(radar, sweep, **kws):
 def ml_grid(radar, sweeps=(2, 3), interpfun=interp_mba, **kws):
     """melting layer height as a grid from a volume scan"""
     # lower threshold when closer to radar (higher elevation)
-    max_h_change = {2: 800, 3: 300}
+    max_h_change = {2: 800, 3: 300} # TODO
     xys = dict(bot=[], top=[])
     zs = dict(bot=[], top=[])
     v = dict()

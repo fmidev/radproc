@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from radproc.aliases import zh, zdr, rhohv, mli
-from radproc.visual import plot_pseudo_rhi, plot_ppi, plot_edge
+from radproc.visual import plot_ppi, plot_edge
 from radproc.filtering import FLTRD_SUFFIX
 from radproc.io import read_h5
 from radproc.ml import add_mli, ml_ppi
