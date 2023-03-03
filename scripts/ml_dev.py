@@ -33,6 +33,7 @@ if __name__ == '__main__':
     #
     bot, top = ml_ppi(r_melt1, sweep, ml_max_change=800)
     bot3, top3 = ml_ppi(r_melt1, 3, ml_max_change=300)
+    bot4, top4 = ml_ppi(r_melt1, 4, ml_max_change=200)
     #
     plot_edge(r_melt1, sweep, bot, axf, color='red')
     plot_edge(r_melt1, sweep, top, axf, color='black')
@@ -44,6 +45,7 @@ if __name__ == '__main__':
     figv, axv = plt.subplots()
     mesh = axv.pcolormesh(s, s, vtop, cmap='pyart_RefDiff')
     plot_edge(r_melt1, sweep, top, axv, color='black')
-    plot_edge(r_melt1, sweep, top3, axv, color='black')
+    plot_edge(r_melt1, 3, top3, axv, color='black')
+    plot_edge(r_melt1, 4, top4, axv, color='black')
     axv.axis('equal')
     figv.colorbar(mesh)

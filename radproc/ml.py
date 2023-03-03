@@ -234,10 +234,10 @@ def ml_ppi(radar, sweep, **kws):
     return ml_smooth['bot'], ml_smooth['top']
 
 
-def ml_grid(radar, sweeps=(2, 3), interpfun=interp_mba, **kws):
+def ml_grid(radar, sweeps=(2, 3, 4), interpfun=interp_mba, **kws):
     """melting layer height as a grid from a volume scan"""
     # lower threshold when closer to radar (higher elevation)
-    max_h_change = {2: 800, 3: 300} # TODO
+    max_h_change = {2: 800, 3: 300, 4: 200} # TODO these are from the sleeve
     xys = dict(bot=[], top=[])
     zs = dict(bot=[], top=[])
     v = dict()
