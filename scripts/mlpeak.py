@@ -40,4 +40,3 @@ if __name__ == '__main__':
     ax1.plot(x, raw, label='raw')
     ax1.plot(x, final, label='filtered')
     ax1.set_xlim(left=-1, right=200)
-    # TODO: ignore nearest gates

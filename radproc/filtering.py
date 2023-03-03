@@ -196,10 +196,13 @@ def _ma_filter(field_data, filterfun=median_filter, **kws):
 def filter_field(radar, fieldname, filled=False, **kws):
     """Apply filter function to radar field sweep-by-sweep."""
     sweeps = radar.sweep_number['data']
-    if filled: # TODO: cleanup
-        filtered = np.ma.concatenate([_ma_filter(radar.get_field(n, fieldname).filled(0), **kws) for n in sweeps])
-    else:
-        filtered = np.ma.concatenate([_ma_filter(radar.get_field(n, fieldname), **kws) for n in sweeps])
+    data = []
+    for n in sweeps:
+        sdata = radar.get_field(n, fieldname)
+        if filled:
+            sdata = sdata.filled(0)
+        data.append(_ma_filter(sdata, **kws))
+    filtered = np.ma.concatenate(data)
     if not filtered.mask.any():
         filtered = np.ma.array(filtered, mask=radar.fields[fieldname]['data'].mask)
     if fieldname[-len(FLTRD_SUFFIX):] == FLTRD_SUFFIX:

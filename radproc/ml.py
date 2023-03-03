@@ -196,7 +196,8 @@ def add_mli(radar):
     _add_ml_indicator(radar)
     filter_field(radar, mli, filterfun=fltr_ignore_head, n=3)
     filter_field(radar, mli+FLTRD_SUFFIX, filterfun=uniform_filter, size=(9,1), mode='wrap')
-    filter_field(radar, mli+FLTRD_SUFFIX, filterfun=savgol_filter, filled=True, window_length=60, polyorder=3, axis=1)
+    filter_field(radar, mli+FLTRD_SUFFIX, filterfun=savgol_filter, filled=True,
+                 window_length=60, polyorder=3, axis=1)
 
 
 def _edge2cartesian(radar, edge, sweep):
