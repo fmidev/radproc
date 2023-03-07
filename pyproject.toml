@@ -1,3 +1,32 @@
 [build-system]
-requires = ["setuptools>=42"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "radproc"
+description = "radar data processing tools"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+  {name = "Jussi Tiira", email = "jussi.tiira@fmi.fi"}
+]
+keywords = ["meteorology", "weather radar"]
+requires-python = ">=3.8"
+dependencies = [
+  "scipy",
+  "pandas",
+  "scikit-learn",
+  "arm_pyart",
+  "h5py",
+  "mba @ git+https://github.com/ddemidov/mba.git"
+]
+dynamic = ["version"]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "radproc/_version.py"
+
+[tool.hatch.metadata]
+allow-direct-references = true
