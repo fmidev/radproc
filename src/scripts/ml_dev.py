@@ -33,9 +33,9 @@ if __name__ == '__main__':
     #
     vbot, vtop, lims = ml_grid(r_melt1, resolution=50)
     #
-    plot_edge(r_melt1, sweep, lims[sweep]['bot'], axf, color='red')
+    plot_edge(r_melt1, sweep, lims[sweep]['bottom'], axf, color='red')
     plot_edge(r_melt1, sweep, lims[sweep]['top'], axf, color='black')
-    plot_edge(r_melt1, sweep, lims[sweep]['bot'], axrho, color='blue')
+    plot_edge(r_melt1, sweep, lims[sweep]['bottom'], axrho, color='blue')
     plot_edge(r_melt1, sweep, lims[sweep]['top'], axrho, color='black')
     #
     figv, axv = plot_ml_boundary_level(vtop)

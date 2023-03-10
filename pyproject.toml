@@ -22,6 +22,9 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[project.scripts]
+sulatiirain = "radproc.cli.sulatiirain:main"
+
 [tool.hatch.version]
 source = "vcs"
 

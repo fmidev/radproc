@@ -224,27 +224,27 @@ def ml_ppi(radar, sweep, **kws):
     mlidf = get_field_df(radar, sweep, mli+FLTRD_SUFFIX).fillna(0)
     rhodf = get_field_df(radar, sweep, rhohv+FLTRD_SUFFIX)
     bot, top = ml_limits(mlidf, rhodf, **kws)
-    lims = {'bot': bot, 'top': top}
+    lims = {'bottom': bot, 'top': top}
     h = ppi_altitude(radar, sweep)
     ml_smooth = dict()
     for limlabel in lims.keys():
         limfh = filter_series_skipna(lims[limlabel], uniform_filter, size=30, mode='wrap')
         limfh.name = 'height'
         ml_smooth[limlabel] = _edge_gates(limfh, h)
-    return ml_smooth['bot'], ml_smooth['top']
+    return ml_smooth['bottom'], ml_smooth['top']
 
 
 def ml_grid(radar, sweeps=(2, 3, 4), interpfun=interp_mba, **kws):
     """melting layer height as a grid from a volume scan"""
     # lower threshold when closer to radar (higher elevation)
     max_h_change = {2: 800, 3: 300, 4: 200} # TODO these are from the sleeve
-    xys = dict(bot=[], top=[])
-    zs = dict(bot=[], top=[])
+    xys = dict(bottom=[], top=[])
+    zs = dict(bottom=[], top=[])
     v = dict()
     all_lims = {}
     for sweep in sweeps:
         bot, top = ml_ppi(radar, sweep, ml_max_change=max_h_change[sweep])
-        lims = {'bot': bot, 'top': top}
+        lims = {'bottom': bot, 'top': top}
         all_lims[sweep] = lims
         for limlabel in lims.keys():
             xy, z = _edge2cartesian(radar, lims[limlabel], sweep)
@@ -254,4 +254,4 @@ def ml_grid(radar, sweeps=(2, 3, 4), interpfun=interp_mba, **kws):
         xy = np.concatenate(xys[limlabel])
         z = np.concatenate(zs[limlabel])
         v[limlabel] = interpfun(xy, z, **kws)
-    return v['bot'], v['top'], all_lims
+    return v['bottom'], v['top'], all_lims
