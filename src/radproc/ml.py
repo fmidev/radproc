@@ -241,9 +241,11 @@ def ml_grid(radar, sweeps=(2, 3, 4), interpfun=interp_mba, **kws):
     xys = dict(bot=[], top=[])
     zs = dict(bot=[], top=[])
     v = dict()
+    all_lims = {}
     for sweep in sweeps:
         bot, top = ml_ppi(radar, sweep, ml_max_change=max_h_change[sweep])
         lims = {'bot': bot, 'top': top}
+        all_lims[sweep] = lims
         for limlabel in lims.keys():
             xy, z = _edge2cartesian(radar, lims[limlabel], sweep)
             xys[limlabel].append(xy)
@@ -252,4 +254,4 @@ def ml_grid(radar, sweeps=(2, 3, 4), interpfun=interp_mba, **kws):
         xy = np.concatenate(xys[limlabel])
         z = np.concatenate(zs[limlabel])
         v[limlabel] = interpfun(xy, z, **kws)
-    return v['bot'], v['top']
+    return v['bot'], v['top'], all_lims

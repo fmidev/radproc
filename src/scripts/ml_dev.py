@@ -1,14 +1,14 @@
 """melting layer detection development script"""
 import os
 
-import numpy as np
 import matplotlib.pyplot as plt
 
 from radproc.aliases import zh, zdr, rhohv, mli
-from radproc.visual import plot_pseudo_rhi, plot_ppi, plot_edge
+from radproc.visual import (plot_pseudo_rhi, plot_ppi, plot_edge,
+                            plot_ml_boundary_level, plot_detected_ml_bounds)
 from radproc.filtering import FLTRD_SUFFIX
 from radproc.io import read_h5
-from radproc.ml import add_mli, ml_ppi, ml_grid
+from radproc.ml import add_mli, ml_grid
 
 
 if __name__ == '__main__':
@@ -31,24 +31,12 @@ if __name__ == '__main__':
     ax3 = plot_pseudo_rhi(r_melt1, vmin=0, vmax=10, what=mli)
     axf = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli+FLTRD_SUFFIX)
     #
-    bot, top = ml_ppi(r_melt1, sweep, ml_max_change=800)
-    bot3, top3 = ml_ppi(r_melt1, 3, ml_max_change=300)
-    bot4, top4 = ml_ppi(r_melt1, 4, ml_max_change=200)
+    vbot, vtop, lims = ml_grid(r_melt1, resolution=50)
     #
-    plot_edge(r_melt1, sweep, bot, axf, color='red')
-    plot_edge(r_melt1, sweep, top, axf, color='black')
-    plot_edge(r_melt1, sweep, bot, axrho, color='blue')
-    plot_edge(r_melt1, sweep, top, axrho, color='black')
+    plot_edge(r_melt1, sweep, lims[sweep]['bot'], axf, color='red')
+    plot_edge(r_melt1, sweep, lims[sweep]['top'], axf, color='black')
+    plot_edge(r_melt1, sweep, lims[sweep]['bot'], axrho, color='blue')
+    plot_edge(r_melt1, sweep, lims[sweep]['top'], axrho, color='black')
     #
-    s = np.linspace(-100, 100)
-    vbot, vtop = ml_grid(r_melt1, resolution=50)
-    figv, axv = plt.subplots()
-    mesh = axv.pcolormesh(s, s, vtop, cmap='pyart_RefDiff')
-    plot_edge(r_melt1, sweep, top, axv, color='black')
-    plot_edge(r_melt1, 3, top3, axv, color='black')
-    plot_edge(r_melt1, 4, top4, axv, color='black')
-    axv.set_aspect('equal', 'box')
-    axv.set_xlabel('East West distance from radar [km]')
-    axv.set_ylabel('North South distance from radar [km]')
-    cb = figv.colorbar(mesh)
-    cb.set_label('Altitude [m]')
+    figv, axv = plot_ml_boundary_level(vtop)
+    plot_detected_ml_bounds(r_melt1, lims, axv, boundkey='top')
