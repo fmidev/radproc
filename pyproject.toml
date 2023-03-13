@@ -8,7 +8,7 @@ description = "radar data processing tools"
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [
-  {name = "Jussi Tiira", email = "jussi.tiira@fmi.fi"}
+  {name = "Jussi Tiira", email = "jussi.tiira@fmi.fi"},
 ]
 keywords = ["meteorology", "weather radar"]
 requires-python = ">=3.8"
@@ -19,9 +19,13 @@ dependencies = [
   "arm_pyart",
   "h5py",
   "click",
-  "mba @ git+https://github.com/ddemidov/mba.git"
 ]
 dynamic = ["version"]
+
+[project.optional-dependencies]
+full = [
+  "mba @ git+https://github.com/ddemidov/mba.git",
+]
 
 [project.scripts]
 sulatiirain = "radproc.cli.sulatiirain:main"
