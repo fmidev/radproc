@@ -18,6 +18,7 @@ dependencies = [
   "scikit-learn",
   "arm_pyart",
   "h5py",
+  "click",
   "mba @ git+https://github.com/ddemidov/mba.git"
 ]
 dynamic = ["version"]
