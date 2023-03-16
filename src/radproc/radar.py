@@ -17,3 +17,14 @@ def zgates_per_sweep(radar, zlim=650):
     """how many gates until reaching zlim meters above radar for each sweep"""
     sweeps = radar.sweep_number['data']
     return [(radar.get_gate_x_y_z(n)[2][0]<zlim).sum() for n in sweeps]
+
+
+def source2dict(radar):
+    """radar metadata source as dictionary"""
+    src = radar.metadata['source']
+    l = src.split(',')
+    d = {}
+    for pair in l:
+        key, value = pair.split(':')
+        d[key] = value
+    return d
