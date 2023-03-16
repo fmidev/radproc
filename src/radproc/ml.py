@@ -82,6 +82,8 @@ def get_peaks(mli, hlim=(0, H_MAX), height=2, width=0, distance=20,
 def ml_height(mlis, **kws):
     """weighted median ML height from ML indicator using peak detection"""
     peaksi, peaks = get_peaks(mlis, **kws)
+    if peaks.empty:
+        return np.nan
     return ml_height_median(peaksi, peaks)
 
 
@@ -126,6 +128,9 @@ def limits_peak(peaksi, heights):
 def ml_limits_raw(mli, ml_max_change=1500, **kws): # free param
     """ML height range from ML indicator"""
     mlh = ml_height(mli)
+    if np.isnan(mlh):
+        nans = pd.Series(index=mli.columns, data=np.nan)
+        return nans, nans
     peaksi, _ = get_peaks(mli, hlim=(mlh-ml_max_change, mlh+ml_max_change),
                               **kws)
     return limits_peak(peaksi, mli.index)
@@ -145,6 +150,8 @@ def fltr_ml_limits(limits, rho):
 def ml_limits(mli, rho, **kws):
     """filtered ml bottom and top heights"""
     limdfs = ml_limits_raw(mli, **kws)
+    if limdfs[0].isna().all().all():
+        return limdfs
     lims = tuple((df.height for df in limdfs))
     # filter based on rel_height sensitivity
     lim05dfs = ml_limits_raw(mli, rel_height=0.5) # free param
@@ -224,6 +231,8 @@ def ml_ppi(radar, sweep, **kws):
     mlidf = get_field_df(radar, sweep, mli+FLTRD_SUFFIX).fillna(0)
     rhodf = get_field_df(radar, sweep, rhohv+FLTRD_SUFFIX)
     bot, top = ml_limits(mlidf, rhodf, **kws)
+    if bot.isna().all():
+        return bot, top
     lims = {'bottom': bot, 'top': top}
     h = ppi_altitude(radar, sweep)
     ml_smooth = dict()
@@ -244,12 +253,21 @@ def ml_grid(radar, sweeps=(2, 3, 4), interpfun=interp_mba, **kws):
     all_lims = {}
     for sweep in sweeps:
         bot, top = ml_ppi(radar, sweep, ml_max_change=max_h_change[sweep])
+        if bot.isna().all().all():
+            continue
         lims = {'bottom': bot, 'top': top}
         all_lims[sweep] = lims
         for limlabel in lims.keys():
             xy, z = _edge2cartesian(radar, lims[limlabel], sweep)
             xys[limlabel].append(xy)
             zs[limlabel].append(z)
+    if len(all_lims) == 0:
+        try:
+            reso = kws['resolution']
+        except KeyError:
+            reso = 50
+        nans = np.full([reso, reso], np.nan)
+        return nans, nans, all_lims
     for limlabel in lims.keys():
         xy = np.concatenate(xys[limlabel])
         z = np.concatenate(zs[limlabel])
