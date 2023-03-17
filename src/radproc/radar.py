@@ -1,6 +1,10 @@
 """misc tools for working with pyart Radar objects"""
 import pandas as pd
 
+from radproc.qpe import rainrate
+from radproc.aliases import zh, lwe
+from radproc.math import db2lin
+
 
 def ppi_altitude(radar, sweep):
     """1D altitude vector along ray from PPI"""
@@ -28,3 +32,12 @@ def source2dict(radar):
         key, value = pair.split(':')
         d[key] = value
     return d
+
+
+def z_r_qpe(radar):
+    """Add precipitation rate field to radar using r(z) relation."""
+    dbz = radar.get_field(0, zh)
+    z = db2lin(dbz)
+    r = rainrate(z)
+    rfield = {'units': 'mm h-1', 'data': r}
+    radar.add_field(lwe, rfield)

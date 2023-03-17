@@ -1,6 +1,16 @@
 import numpy as np
 
 
+def db2lin(db):
+    """decibels to linear scale"""
+    return np.power(10, db/10)
+
+
+def lin2db(lin):
+    """linear to decibel scale"""
+    return 10*np.log10(lin)
+
+
 def interp_mba(xys, zs, m0=2, lo=-100, hi=100, resolution=50, margin=1):
     """scattered data interpolation with multilevel B-splines"""
     from mba import mba2 # optional dependency
