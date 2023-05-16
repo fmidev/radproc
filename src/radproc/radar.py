@@ -34,9 +34,9 @@ def source2dict(radar):
     return d
 
 
-def z_r_qpe(radar):
+def z_r_qpe(radar, dbz_field=zh):
     """Add precipitation rate field to radar using r(z) relation."""
-    dbz = radar.get_field(0, zh)
+    dbz = radar.get_field(0, dbz_field)
     z = db2lin(dbz)
     r = rainrate(z)
     rfield = {'units': 'mm h-1', 'data': r}
