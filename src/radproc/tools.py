@@ -17,3 +17,13 @@ def echo_top_h(z, zmin=-8):
     top = (z>zmin).loc[::-1].idxmax()
     top[top==z.index[-1]] = np.nan
     return top
+
+
+def source2dict(src):
+    """radar source metadata as dictionary"""
+    l = src.split(',')
+    d = {}
+    for pair in l:
+        key, value = pair.split(':')
+        d[key] = value
+    return d
