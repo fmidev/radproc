@@ -6,13 +6,15 @@ from pyart.graph.common import generate_radar_time_begin
 from radproc.io import read_h5
 from radproc.ml import add_mli, ml_grid
 from radproc.visual import plot_ml_boundary_level, plot_detected_ml_bounds
-from radproc.radar import source2dict
+from radproc.tools import source2dict
 
 
 @click.command()
-@click.option('-i', 'h5file', help='input ODIM HDF5 radar volume', required=True)
+@click.option('-i', 'h5file', metavar='PATH',
+              help='input ODIM HDF5 radar volume', required=True)
 @click.argument('outdir', nargs=1)
 def main(h5file, outdir):
+    """melting layer analysis"""
     radar = read_h5(h5file)
     add_mli(radar)
     bot, top, lims = ml_grid(radar, resolution=50)
