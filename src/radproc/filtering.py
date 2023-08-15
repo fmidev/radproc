@@ -194,13 +194,14 @@ def _ma_filter(field_data, filterfun=median_filter, **kws):
         return np.ma.array(filtered, mask=False)
 
 
-def filter_field(radar, fieldname, filled=False, zgate_kw=None, **kws):
+def filter_field(radar, existing_field_name, field_name=None, filled=False,
+                 zgate_kw=None, **kws):
     """Apply filter function to radar field sweep-by-sweep."""
     sweeps = radar.sweep_number['data']
     zgates = zgates_per_sweep(radar)
     data = []
     for n in sweeps:
-        sdata = radar.get_field(n, fieldname)
+        sdata = radar.get_field(n, existing_field_name)
         if filled:
             sdata = sdata.filled(0)
         if zgate_kw is None:
@@ -210,9 +211,11 @@ def filter_field(radar, fieldname, filled=False, zgate_kw=None, **kws):
         data.append(_ma_filter(sdata, **zkw, **kws))
     filtered = np.ma.concatenate(data)
     if not filtered.mask.any():
-        filtered = np.ma.array(filtered, mask=radar.fields[fieldname]['data'].mask)
-    if fieldname[-len(FLTRD_SUFFIX):] == FLTRD_SUFFIX:
-        fieldname_out = fieldname
-    else:
-        fieldname_out = fieldname+FLTRD_SUFFIX
-    radar.add_field_like(fieldname, fieldname_out, filtered, replace_existing=True)
+        filtered = np.ma.array(filtered, mask=radar.fields[existing_field_name]['data'].mask)
+    if field_name is None:
+        if existing_field_name[-len(FLTRD_SUFFIX):] == FLTRD_SUFFIX:
+            field_name = existing_field_name
+        else:
+            field_name = existing_field_name+FLTRD_SUFFIX
+    radar.add_field_like(existing_field_name, field_name, filtered,
+                         replace_existing=True)
