@@ -1,9 +1,14 @@
 """misc tools for working with pyart Radar objects"""
 import pandas as pd
+import numpy as np
+import pyart
 
 from radproc.qpe import rainrate
 from radproc.aliases import zh, lwe
 from radproc.math import db2lin
+
+
+PYART_AEQD_FMT = '+proj={proj} +lon_0={lon_0} +lat_0={lat_0} +R={R}'
 
 
 def ppi_altitude(radar, sweep):
@@ -23,10 +28,29 @@ def zgates_per_sweep(radar, zlim=650):
     return [(radar.get_gate_x_y_z(n)[2][0]<zlim).sum() for n in sweeps]
 
 
-def z_r_qpe(radar, dbz_field=zh):
+def z_r_qpe(radar, dbz_field=zh, lwe_field=lwe, add_field=True):
     """Add precipitation rate field to radar using r(z) relation."""
     dbz = radar.get_field(0, dbz_field)
     z = db2lin(dbz)
     r = rainrate(z)
     rfield = {'units': 'mm h-1', 'data': r}
-    radar.add_field(lwe, rfield)
+    if add_field:
+        radar.add_field(lwe_field, rfield)
+    return rfield
+
+
+def pyart_aeqd(radar):
+    """radar default projection definition as dictionary"""
+    lat = radar.latitude['data'][0]
+    lon = radar.longitude['data'][0]
+    if isinstance(lat, np.ndarray):
+        lat = lat[0]
+        lon = lon[0]
+    return dict(proj='aeqd', lat_0=lat, lon_0=lon, R=6370997)
+
+
+def dummy_radar(odimfile, include_fields=['DBZH']):
+    """Read minimal data to create a dummy radar object."""
+    return pyart.aux_io.read_odim_h5(odimfile, include_datasets=['dataset1'],
+                                     file_field_names=True,
+                                     include_fields=include_fields)
