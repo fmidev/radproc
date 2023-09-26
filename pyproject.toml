@@ -10,7 +10,7 @@ license = {file = "LICENSE"}
 authors = [
   {name = "Jussi Tiira", email = "jussi.tiira@fmi.fi"},
 ]
-keywords = ["meteorology", "weather radar"]
+keywords = ["meteorology", "weather radar", "precipitation"]
 requires-python = ">=3.8"
 dependencies = [
   "scipy",
@@ -22,7 +22,7 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-full = [
+ml = [
   "mba @ git+https://github.com/ddemidov/mba.git",
 ]
 arm = [
@@ -31,6 +31,9 @@ arm = [
 mch = [
   #"pyart_mch",
   "pyart_mch @ git+https://github.com/MeteoSwiss/pyart.git",
+]
+dynamics = [
+  "pysteps"
 ]
 
 [project.scripts]
