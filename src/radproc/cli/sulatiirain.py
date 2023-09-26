@@ -20,7 +20,7 @@ def main(h5file, outdir):
     bot, top, lims = ml_grid(radar, resolution=50)
     t = generate_radar_time_begin(radar)
     tstamp = t.strftime('%Y%m%d%H%M')
-    site = source2dict(radar)['NOD']
+    site = source2dict(radar.metadata['source'])['NOD']
     topbot = {'top': top, 'bottom': bot}
     for key, value in topbot.items():
         fig, ax = plot_ml_boundary_level(value)
