@@ -3,7 +3,6 @@ import os
 
 import matplotlib.pyplot as plt
 
-from radproc.aliases import zh, zdr, rhohv, mli
 from radproc.visual import (plot_pseudo_rhi, plot_ppi, plot_edge,
                             plot_ml_boundary_level, plot_detected_ml_bounds)
 from radproc.filtering import FLTRD_SUFFIX
@@ -24,11 +23,11 @@ if __name__ == '__main__':
     r_melt1 = read_h5(f_melt1)
     add_mli(r_melt1)
     #
-    axzh = plot_ppi(r_melt1, sweep=sweep, what=zh)
-    axrho = plot_ppi(r_melt1, vmin=0.86, vmax=1, sweep=sweep, what=rhohv)
-    axzdr = plot_ppi(r_melt1, sweep=sweep, what=zdr)
-    axzdrf = plot_ppi(r_melt1, sweep=sweep, what=zdr+FLTRD_SUFFIX)
-    axrhof = plot_ppi(r_melt1, vmin=0.86, vmax=1, sweep=sweep, what=rhohv+FLTRD_SUFFIX)
+    axzh = plot_ppi(r_melt1, sweep=sweep, what='DBZH')
+    axrho = plot_ppi(r_melt1, vmin=0.86, vmax=1, sweep=sweep, what='RHOHV')
+    axzdr = plot_ppi(r_melt1, sweep=sweep, what='ZDR')
+    axzdrf = plot_ppi(r_melt1, sweep=sweep, what='ZDR'+FLTRD_SUFFIX)
+    axrhof = plot_ppi(r_melt1, vmin=0.86, vmax=1, sweep=sweep, what='RHOHV'+FLTRD_SUFFIX)
     ax2 = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli)
     ax3 = plot_pseudo_rhi(r_melt1, vmin=0, vmax=10, what=mli)
     axf = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli+FLTRD_SUFFIX)
