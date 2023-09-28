@@ -4,7 +4,7 @@ import numpy as np
 import pyart
 
 from radproc.qpe import rainrate
-from radproc.aliases import zh, lwe
+from radproc.aliases.fmi import ZH, LWE
 from radproc.math import db2lin
 
 
@@ -28,7 +28,7 @@ def zgates_per_sweep(radar, zlim=650):
     return [(radar.get_gate_x_y_z(n)[2][0]<zlim).sum() for n in sweeps]
 
 
-def z_r_qpe(radar, dbz_field=zh, lwe_field=lwe, add_field=True):
+def z_r_qpe(radar, dbz_field=ZH, lwe_field=LWE, add_field=True):
     """Add precipitation rate field to radar using r(z) relation."""
     dbz = radar.get_field(0, dbz_field)
     z = db2lin(dbz)

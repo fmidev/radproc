@@ -3,14 +3,14 @@
 
 from sklearn import preprocessing
 
-from radproc.aliases import zh, zdr, kdp
+from radproc.aliases.fmi import ZH, ZDR, KDP
 
 
-SCALING_LIMITS_SNOW = {zh: (-10, 34), zdr: (0, 3.3), kdp: (0, 0.11)}
-SCALING_LIMITS_RAIN = {zh: (-10, 38), zdr: (0, 3.1), kdp: (0, 0.25)}
+SCALING_LIMITS_SNOW = {ZH: (-10, 34), ZDR: (0, 3.3), KDP: (0, 0.11)}
+SCALING_LIMITS_RAIN = {ZH: (-10, 38), ZDR: (0, 3.1), KDP: (0, 0.25)}
 
 
-def scale(data, param=zh, has_ml=True, inverse=False):
+def scale(data, param=ZH, has_ml=True, inverse=False):
     """radar data scaling"""
     scaled = data.copy()
     limits = SCALING_LIMITS_RAIN if has_ml else SCALING_LIMITS_SNOW
@@ -36,7 +36,7 @@ def scale_field(radar, field, field_type=None, **kws):
 class RadarDataScaler(preprocessing.FunctionTransformer):
     """FunctionTransformer wrapper"""
 
-    def __init__(self, param=zh, has_ml=True, **kws):
+    def __init__(self, param=ZH, has_ml=True, **kws):
         self.param = param
         self.has_ml = has_ml
         fun_kws = dict(param=param, has_ml=has_ml, inverse=False)

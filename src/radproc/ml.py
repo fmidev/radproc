@@ -5,15 +5,14 @@ import pandas as pd
 from scipy.signal import find_peaks, savgol_filter
 from scipy.ndimage import median_filter, uniform_filter
 
-from radproc.aliases import zh, zdr, rhohv, mli
+from radproc.aliases.fmi import ZH, ZDR, RHOHV, MLI, FLTRD_SUFFIX
 from radproc.preprocessing import scale_field
 from radproc.math import weighted_median, interp_mba
 from radproc.tools import find
 from radproc.radar import get_field_df, ppi_altitude
 from radproc.filtering import (savgol_series, fltr_rolling_median_thresh,
                                fltr_no_hydrometeors, filter_field,
-                               filter_series_skipna, fltr_ignore_head,
-                               FLTRD_SUFFIX)
+                               filter_series_skipna, fltr_ignore_head)
 
 
 H_MAX = 4200
@@ -181,29 +180,29 @@ def collapse2top(df_filled, top):
 
 def _ml_indicator(radar):
     """melting indicator from Radar object"""
-    zh_scaled = scale_field(radar, zh)
-    zdr_scaled = scale_field(radar, zdr+FLTRD_SUFFIX, field_type=zdr)
-    rho = radar.fields[rhohv+FLTRD_SUFFIX]['data']
+    zh_scaled = scale_field(radar, ZH)
+    zdr_scaled = scale_field(radar, ZDR+FLTRD_SUFFIX, field_type=ZDR)
+    rho = radar.fields[RHOHV+FLTRD_SUFFIX]['data']
     return indicator_formula(zdr_scaled, zh_scaled, rho)
 
 
 def _add_ml_indicator(radar):
     """Calculate and add ML indicator field to Radar object."""
-    mlifield = radar.fields[zh].copy()
+    mlifield = radar.fields[ZH].copy()
     mlifield['data'] = _ml_indicator(radar)
     mlifield['long_name'] = 'Melting layer indicator'
-    mlifield['coordinates'] = radar.fields[zdr]['coordinates']
-    radar.add_field(mli, mlifield, replace_existing=True)
+    mlifield['coordinates'] = radar.fields[ZDR]['coordinates']
+    radar.add_field(MLI, mlifield, replace_existing=True)
 
 
 def add_mli(radar):
     """Add filtered melting layer indicator to Radar object."""
-    filter_field(radar, zdr, filterfun=median_filter, size=10, mode='wrap')
-    filter_field(radar, rhohv, filterfun=median_filter, size=10, mode='wrap')
+    filter_field(radar, ZDR, filterfun=median_filter, size=10, mode='wrap')
+    filter_field(radar, RHOHV, filterfun=median_filter, size=10, mode='wrap')
     _add_ml_indicator(radar)
-    filter_field(radar, mli, filterfun=fltr_ignore_head, n=3)
-    filter_field(radar, mli+FLTRD_SUFFIX, filterfun=uniform_filter, size=(9,1), mode='wrap')
-    filter_field(radar, mli+FLTRD_SUFFIX, filterfun=savgol_filter, filled=True,
+    filter_field(radar, MLI, filterfun=fltr_ignore_head, n=3)
+    filter_field(radar, MLI+FLTRD_SUFFIX, filterfun=uniform_filter, size=(9,1), mode='wrap')
+    filter_field(radar, MLI+FLTRD_SUFFIX, filterfun=savgol_filter, filled=True,
                  zgate_kw='window_length', polyorder=3, axis=1)
 
 
@@ -228,8 +227,8 @@ def ml_ppi(radar, sweep, **kws):
     """smooth melting layer detection from a single sweep"""
     # Not filling mli nans with zeros sometimes causes peak depth misdetection.
     # On the other hand, filling may produce unwanted extra peaks.
-    mlidf = get_field_df(radar, sweep, mli+FLTRD_SUFFIX).fillna(0)
-    rhodf = get_field_df(radar, sweep, rhohv+FLTRD_SUFFIX)
+    mlidf = get_field_df(radar, sweep, MLI+FLTRD_SUFFIX).fillna(0)
+    rhodf = get_field_df(radar, sweep, RHOHV+FLTRD_SUFFIX)
     bot, top = ml_limits(mlidf, rhodf, **kws)
     if bot.isna().all():
         return bot, top

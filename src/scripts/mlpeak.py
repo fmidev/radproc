@@ -4,9 +4,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from radproc.aliases import zh, zdr, rhohv, mli
+from radproc.aliases.fmi import RHOHV, MLI, FLTRD_SUFFIX
 from radproc.visual import plot_ppi, plot_edge
-from radproc.filtering import FLTRD_SUFFIX
 from radproc.io import read_h5
 from radproc.ml import add_mli, ml_ppi
 
@@ -21,10 +20,10 @@ if __name__ == '__main__':
     r_melt1 = read_h5(f_melt1)
     add_mli(r_melt1)
     #
-    axrho = plot_ppi(r_melt1, vmin=0.86, vmax=1, sweep=sweep, what=rhohv)
-    axrhof = plot_ppi(r_melt1, vmin=0.86, vmax=1, sweep=sweep, what=rhohv+FLTRD_SUFFIX)
-    axmli = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli)
-    axf = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=mli+FLTRD_SUFFIX)
+    axrho = plot_ppi(r_melt1, vmin=0.86, vmax=1, sweep=sweep, what=RHOHV)
+    axrhof = plot_ppi(r_melt1, vmin=0.86, vmax=1, sweep=sweep, what=RHOHV+FLTRD_SUFFIX)
+    axmli = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=MLI)
+    axf = plot_ppi(r_melt1, vmin=0, vmax=10, sweep=sweep, what=MLI+FLTRD_SUFFIX)
     #
     bot, top = ml_ppi(r_melt1, sweep, ml_max_change=800)
     #
@@ -33,8 +32,8 @@ if __name__ == '__main__':
     plot_edge(r_melt1, sweep, bot, axrho, color='blue')
     plot_edge(r_melt1, sweep, top, axrho, color='black')
     #
-    raw = r_melt1.get_field(sweep, mli)[ray]
-    final = r_melt1.get_field(sweep, mli+FLTRD_SUFFIX)[ray]
+    raw = r_melt1.get_field(sweep, MLI)[ray]
+    final = r_melt1.get_field(sweep, MLI+FLTRD_SUFFIX)[ray]
     x = np.arange(final.size)
     fig1, ax1 = plt.subplots()
     ax1.plot(x, raw, label='raw')

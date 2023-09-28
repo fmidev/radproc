@@ -5,6 +5,7 @@ from scipy.ndimage.filters import median_filter
 
 from radproc import NAN_REPLACEMENT
 from radproc.radar import zgates_per_sweep
+from radproc.aliases.fmi import FLTRD_SUFFIX
 
 
 # CONFIG
@@ -12,9 +13,6 @@ MEDIAN_WINDOWS = {'ZH': (7, 1),
                   'KDP': (19, 1),
                   'ZDR': (11, 1),
                   'RHO': (25, 1)} # for nonmet filtering
-
-# constants
-FLTRD_SUFFIX = '_filtered'
 
 
 def dict_keys_lower(d):
