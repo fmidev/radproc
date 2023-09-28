@@ -191,7 +191,6 @@ def _add_ml_indicator(radar):
     mlifield = radar.fields[ZH].copy()
     mlifield['data'] = _ml_indicator(radar)
     mlifield['long_name'] = 'Melting layer indicator'
-    mlifield['coordinates'] = radar.fields[ZDR]['coordinates']
     radar.add_field(MLI, mlifield, replace_existing=True)
 
 
