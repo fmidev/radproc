@@ -7,7 +7,7 @@ from matplotlib.ticker import MaxNLocator
 import cartopy.crs as ccrs
 
 
-def canvas(radar, *colsrows, target_resolution=(1920, 1080)):
+def canvas(radar, *colsrows, target_resolution=(1920, 1080), left=0, right=1):
     figsize = np.multiply(colsrows, (6,5))
     dpi = np.divide(target_resolution, figsize).min()
     proj = ccrs.LambertConformal(central_latitude=radar.latitude["data"].flatten()[0],
@@ -15,7 +15,7 @@ def canvas(radar, *colsrows, target_resolution=(1920, 1080)):
     fig, ax = plt.subplots(nrows=colsrows[1], ncols=colsrows[0], figsize=figsize, dpi=dpi,
                            sharex=True, sharey=True,
                            subplot_kw={'projection': proj})
-    fig.subplots_adjust(left=0, bottom=0.02, right=1, top=0.96, wspace=0, hspace=None)
+    fig.subplots_adjust(left=left, bottom=0.02, right=right, top=0.96, wspace=0, hspace=None)
     return fig, ax
 
 
