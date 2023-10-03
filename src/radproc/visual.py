@@ -10,8 +10,8 @@ import cartopy.crs as ccrs
 def canvas(radar, *colsrows, target_resolution=(1920, 1080)):
     figsize = np.multiply(colsrows, (6,5))
     dpi = np.divide(target_resolution, figsize).min()
-    proj = ccrs.LambertConformal(central_latitude=radar.latitude["data"][0],
-                                 central_longitude=radar.longitude["data"][0])
+    proj = ccrs.LambertConformal(central_latitude=radar.latitude["data"].flatten()[0],
+                                 central_longitude=radar.longitude["data"].flatten()[0])
     fig, ax = plt.subplots(nrows=colsrows[1], ncols=colsrows[0], figsize=figsize, dpi=dpi,
                            sharex=True, sharey=True,
                            subplot_kw={'projection': proj})
