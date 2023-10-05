@@ -15,6 +15,27 @@ from radproc.filtering import (savgol_series, fltr_rolling_median_thresh,
                                filter_series_skipna, fltr_ignore_head)
 
 
+class PrecipCategory:
+    def __init__(self, value, abbr=None, long_name=None, color=None):
+        self.value = value
+        self.abbr = abbr
+        self.long_name = long_name
+        self.color = color
+
+
+PHASE = {'NONE': PrecipCategory(0, abbr='NONE', long_name='not precipitation',
+                                color='black'),
+         'RAIN': PrecipCategory(1, abbr='RAIN', long_name='rain',
+                                color='springgreen'),
+         'WETSNOW': PrecipCategory(2, abbr='WETSNOW', long_name='wet snow',
+                                   color='violet'),
+         'DRYSNOW': PrecipCategory(3, abbr='DRYSNOW', long_name='dry snow',
+                                   color='cornflowerblue'),
+         'UNKNOWN': PrecipCategory(6, abbr='UNKNOWN', long_name='unable to determine',
+                                   color='yellow'),
+         'UNDET': PrecipCategory(7, abbr='UNDET', long_name='not analyzed',
+                                 color='gray')}
+
 H_MAX = 4200
 
 
@@ -271,3 +292,29 @@ def ml_grid(radar, sweeps=(2, 3, 4), interpfun=interp_mba, **kws):
         z = np.concatenate(zs[limlabel])
         v[limlabel] = interpfun(xy, z, **kws)
     return v['bottom'], v['top'], all_lims
+
+
+def ml_field(radar, add_field=False):
+    include = (2, 3, 4)
+    data = []
+    for sweep in radar.sweep_number['data']:
+        phase = radar.get_field(sweep, 'DBZH', copy=True).astype(int)
+        mask = phase.mask.copy()
+        phase.fill(0)
+        if sweep in include:
+            bot, top = ml_ppi(radar, sweep)
+            for (i, botgate), (_, topgate) in zip(bot['gate'].items(), top['gate'].items()):
+                if botgate<1 or topgate<1:
+                    phase[i, :] = PHASE['UNKNOWN'].value
+                    continue
+                phase[i, :botgate] = PHASE['RAIN'].value
+                phase[i, botgate:topgate] = PHASE['WETSNOW'].value
+                phase[i, topgate:] = PHASE['DRYSNOW'].value
+        else:
+            phase[~mask] = PHASE['UNDET'].value
+        phase.mask = mask # restore original mask
+        data.append(phase)
+    pphase = dict(data=np.ma.concatenate(data))
+    if add_field:
+        radar.add_field('PCLASS', pphase)
+    return pphase
