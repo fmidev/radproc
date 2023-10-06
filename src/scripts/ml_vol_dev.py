@@ -25,7 +25,7 @@ if __name__ == '__main__':
     add_mli(radar)
     ml_field(radar, add_field=True)
     #
-    sweep = 1
+    sweep = 2
     cm = ListedColormap([p.color for p in PHASE.values()])
     norm_bins = np.array([p.value for p in PHASE.values()])+0.5
     norm_bins = np.insert(norm_bins, 0, np.min(norm_bins) - 1.0)
