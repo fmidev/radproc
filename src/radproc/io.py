@@ -1,4 +1,5 @@
 """reading and writing data"""
+import h5py
 import pyart.aux_io
 
 
@@ -23,3 +24,12 @@ def read_h5(filename, exclude_datasets=['dataset13'], file_field_names=True, **k
                                                  exclude_datasets=opt, **kws)
             except ValueError:
                 continue
+
+
+def write_h5(radar, outfile, inputfile='', **kws):
+    """pyart write_odim_h5 wrapper"""
+    pyart.aux_io.write_odim_h5(outfile, radar, **kws)
+    if inputfile:
+        with h5py.File(outfile, 'a') as new:
+            with h5py.File(inputfile) as old:
+                new['how'].attrs.update(old['how'].attrs)
