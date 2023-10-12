@@ -4,7 +4,7 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-RUN pip install -U pip && pip install --no-cache-dir '.[ml]'
+RUN pip install -U pip && pip install --no-cache-dir '.[ml,mch]'
 
 ENV PYART_QUIET=1
 
