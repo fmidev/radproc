@@ -222,8 +222,11 @@ def add_mli(radar):
     _add_ml_indicator(radar)
     filter_field(radar, MLI, filterfun=fltr_ignore_head, n=3)
     filter_field(radar, MLI+FLTRD_SUFFIX, filterfun=uniform_filter, size=(9,1), mode='wrap')
-    filter_field(radar, MLI+FLTRD_SUFFIX, filterfun=savgol_filter, filled=True,
-                 zgate_kw='window_length', polyorder=3, axis=1)
+    try:
+        filter_field(radar, MLI+FLTRD_SUFFIX, filterfun=savgol_filter, filled=True,
+                     zgate_kw='window_length', polyorder=3, axis=1)
+    except ValueError: # polyorder must be less than window_length.
+        pass # TODO: warn
 
 
 def _edge2cartesian(radar, edge, sweep):
