@@ -251,7 +251,8 @@ def ml_ppi(radar, sweep, **kws):
     rhodf = get_field_df(radar, sweep, RHOHV+FLTRD_SUFFIX)
     bot, top = ml_limits(mlidf, rhodf, **kws)
     if bot.isna().all():
-        return bot, top
+        nans = pd.DataFrame(pd.concat([bot, bot], axis=1), columns=['height', 'gate'])
+        return nans, nans
     lims = {'bottom': bot, 'top': top}
     h = ppi_altitude(radar, sweep)
     ml_smooth = dict()
@@ -304,7 +305,7 @@ def ml_field(radar, add_field=False):
         if sweep in include:
             bot, top = ml_ppi(radar, sweep)
             for (i, botgate), (_, topgate) in zip(bot['gate'].items(), top['gate'].items()):
-                if botgate<1 or topgate<1:
+                if botgate<1 or topgate<1 or np.isnan(botgate) or np.isnan(topgate):
                     phase[i, :] = PHASE['UNKNOWN'].value
                     continue
                 phase[i, :botgate] = PHASE['RAIN'].value

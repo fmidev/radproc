@@ -18,9 +18,9 @@ def field_shape(radar):
 
 if __name__ == '__main__':
     datadir = os.path.expanduser('~/data/pvol/')
-    #datadir = os.path.expanduser('~/data/polar/fikor')
+    datadir = os.path.expanduser('~/data/polar/fikor')
     fname = os.path.join(datadir, '202206030010_fivih_PVOL.h5')
-    #fname = os.path.join(datadir, '202308080500_radar.polar.fikor.h5')
+    fname = os.path.join(datadir, '202308080500_radar.polar.fikor.h5')
     radar = read_h5(fname, include_datasets=[f'dataset{i}' for i in range(1, 5)])
     add_mli(radar)
     ml_field(radar, add_field=True)
