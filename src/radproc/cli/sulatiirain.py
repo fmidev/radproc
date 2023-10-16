@@ -7,6 +7,7 @@ from radproc.io import read_h5, write_h5
 from radproc.ml import add_mli, ml_grid, ml_field
 from radproc.visual import plot_ml_boundary_level, plot_detected_ml_bounds
 from radproc.tools import source2dict
+from radproc._version import __version__
 
 
 def _out_help():
@@ -32,6 +33,7 @@ def plot_ml(radar, png_dir, tstamp, site):
 @click.option('-o', '--h5-out', metavar='PATH', help=_out_help())
 @click.option('--png-dir', metavar='DIR',
               help='optional PNG figure output directory')
+@click.version_option(version=__version__, prog_name='sulatiirain')
 def main(inputfile, h5_out, png_dir):
     """Perform melting layer analysis on INPUTFILE."""
     radar = read_h5(inputfile)

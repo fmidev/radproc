@@ -3,7 +3,7 @@ FROM python:3
 WORKDIR /usr/src/app
 
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt update && apt upgrade -y && rm -rf /var/lib/apt/lists/*
+RUN apt update && apt upgrade -y && apt install -y libnetcdf-dev && rm -rf /var/lib/apt/lists/*
 
 COPY . .
 
