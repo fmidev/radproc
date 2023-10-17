@@ -254,7 +254,8 @@ def ml_ppi(radar, sweep, **kws):
     rhodf = get_field_df(radar, sweep, RHOHV+FLTRD_SUFFIX)
     bot, top = ml_limits(mlidf, rhodf, **kws)
     if bot.isna().all():
-        nans = pd.DataFrame(pd.concat([bot, bot], axis=1), columns=['height', 'gate'])
+        nanarr = np.full([bot.size, 2], np.nan)
+        nans = pd.DataFrame(nanarr, columns=['height', 'gate'])
         return nans, nans
     lims = {'bottom': bot, 'top': top}
     h = ppi_altitude(radar, sweep)
