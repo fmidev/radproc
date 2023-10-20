@@ -5,9 +5,10 @@ import pyart
 from matplotlib.colors import ListedColormap, BoundaryNorm
 from matplotlib.ticker import FuncFormatter
 from matplotlib.cm import ScalarMappable
+import cartopy.crs as ccrs
 
 from radproc.visual import canvas
-from radproc.io import read_h5
+from radproc.io import read_h5, read_odim_ml
 from radproc.ml import add_mli, ml_field, PHASE
 
 
@@ -16,12 +17,19 @@ def field_shape(radar):
     return radar.get_field(0, field).shape
 
 
+def altitude_ring(radar, sweep, altitude):
+    lat, lon, alt = radar.get_gate_lat_lon_alt(sweep)
+    idx = np.searchsorted(alt[0], altitude)
+    return lat[:, idx], lon[:, idx]
+
+
 if __name__ == '__main__':
     datadir = os.path.expanduser('~/data/pvol/')
     datadir = os.path.expanduser('~/data/polar/fikor')
     fname = os.path.join(datadir, '202206030010_fivih_PVOL.h5')
     fname = os.path.join(datadir, '202308080500_radar.polar.fikor.h5')
     radar = read_h5(fname)
+    zerolevel = read_odim_ml(fname)
     add_mli(radar)
     ml_field(radar, add_field=True)
     #
@@ -41,3 +49,6 @@ if __name__ == '__main__':
     diff = norm_bins[1:] - norm_bins[:-1]
     tickz = norm_bins[:-1] + diff / 2
     cb = fig.colorbar(ScalarMappable(norm=norm, cmap=cm), format=fmt, ticks=tickz)
+    lat, lon = altitude_ring(radar, sweep, zerolevel)
+    for axx in ax:
+        axx.plot(lon, lat, transform=ccrs.Geodetic(), color='black', linewidth=0.8)

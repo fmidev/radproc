@@ -3,6 +3,12 @@ import h5py
 import pyart.aux_io
 
 
+def read_odim_ml(h5file):
+    """Read how/freeze in meters from FMI ODIM HDF5 radar metadata."""
+    with h5py.File(h5file) as f:
+        return f['how'].attrs['freeze']*1000
+
+
 def read_h5(filename, exclude_datasets=['dataset13'], file_field_names=True, **kws):
     """pyart read_odim_h5 wrapper
 
