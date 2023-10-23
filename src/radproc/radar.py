@@ -39,6 +39,13 @@ def z_r_qpe(radar, dbz_field=ZH, lwe_field=LWE, add_field=True):
     return rfield
 
 
+def altitude_ring(radar, sweep, altitude):
+    """coordinates of a constant altitude ring for a given sweep"""
+    lat, lon, alt = radar.get_gate_lat_lon_alt(sweep)
+    idx = np.searchsorted(alt[0], altitude)
+    return lat[:, idx], lon[:, idx]
+
+
 def pyart_aeqd(radar):
     """radar default projection definition as dictionary"""
     lat = radar.latitude['data'][0]
