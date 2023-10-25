@@ -36,7 +36,7 @@ PHASE = {'NONE': PrecipCategory(0, abbr='NONE', long_name='not precipitation',
          'UNDET': PrecipCategory(7, abbr='UNDET', long_name='not analyzed',
                                  color='gray')}
 
-H_MAX = 4200
+H_MAX = 5000
 
 
 def indicator_formula(zdr_scaled, zh_scaled, rho, rho_min=0.86):
@@ -255,13 +255,14 @@ def _edge_gates(edge, height):
     return pd.concat([edge, gates], axis=1)
 
 
-def ml_ppi(radar, sweep, **kws):
+def ml_ppi(radar, sweep, mlh=None, **kws):
     """smooth melting layer detection from a single sweep"""
     # Not filling mli nans with zeros sometimes causes peak depth misdetection.
     # On the other hand, filling may produce unwanted extra peaks.
     mlidf = get_field_df(radar, sweep, MLI+FLTRD_SUFFIX).fillna(0)
     rhodf = get_field_df(radar, sweep, RHOHV+FLTRD_SUFFIX)
-    mlh = np.log(mlidf+1).mean(axis=1).idxmax() # "average ml peak"
+    if mlh is None:
+        mlh = np.log(mlidf+1).mean(axis=1).idxmax() # "average ml peak"
     bot, top = ml_limits(mlidf, rhodf, mlh=mlh, **kws)
     if bot.isna().all():
         nanarr = np.full([bot.size, 2], np.nan)
@@ -309,7 +310,7 @@ def ml_grid(radar, sweeps=(2, 3, 4), interpfun=interp_mba, **kws):
     return v['bottom'], v['top'], all_lims
 
 
-def ml_field(radar, add_field=False):
+def ml_field(radar, add_field=False, **kws):
     include = (2, 3, 4)
     data = []
     for sweep in radar.sweep_number['data']:
@@ -317,7 +318,7 @@ def ml_field(radar, add_field=False):
         mask = phase.mask.copy()
         phase.fill(0)
         if sweep in include:
-            bot, top = ml_ppi(radar, sweep)
+            bot, top = ml_ppi(radar, sweep, **kws)
             for (i, botgate), (_, topgate) in zip(bot['gate'].items(), top['gate'].items()):
                 if botgate<1 or topgate<1 or np.isnan(botgate) or np.isnan(topgate):
                     phase[i, :] = PHASE['UNKNOWN'].value

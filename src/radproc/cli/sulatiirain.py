@@ -46,7 +46,7 @@ def plot_analysis(radar, sweep, zerolevel=-1):
     if zerolevel>0:
         lat, lon = altitude_ring(radar, sweep, zerolevel)
         for axx in ax.flatten():
-            zoom = 0.8
+            zoom = 0.9
             xlim = np.array(axx.get_xlim())*zoom
             axx.set_xlim(*xlim)
             ylim = np.array(axx.get_ylim())*zoom
@@ -79,18 +79,19 @@ def plot_ml(radar, png_dir, tstamp, site):
 def main(inputfile, h5_out, png_dir, analysis_plot):
     """Perform melting layer analysis on INPUTFILE."""
     radar = read_h5(inputfile)
+    zerolevel = read_odim_ml(inputfile)
+    ml_guess = zerolevel-250
     add_mli(radar)
     t = generate_radar_time_begin(radar)
     tstamp = t.strftime('%Y%m%d%H%M')
     site = source2dict(radar.metadata['source'])['NOD']
     if h5_out:
-        ml_field(radar, add_field=True)
+        ml_field(radar, add_field=True, mlh=ml_guess)
         h5out = h5_out.format(timestamp=tstamp, site=site)
         write_h5(radar, h5out, inputfile=inputfile)
     if png_dir:
         plot_ml(radar, png_dir, tstamp, site)
     if analysis_plot:
-        ml_field(radar, add_field=True)
-        zerolevel = read_odim_ml(inputfile)
+        ml_field(radar, add_field=True, mlh=ml_guess)
         fig, axarr = plot_analysis(radar, analysis_plot, zerolevel)
         plt.show()

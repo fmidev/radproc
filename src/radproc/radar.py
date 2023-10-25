@@ -56,6 +56,16 @@ def pyart_aeqd(radar):
     return dict(proj='aeqd', lat_0=lat, lon_0=lon, R=6370997)
 
 
+def nonmet_filter(radar, rhohv_min=0.7, z_min=0.1):
+    """GateFilter for some non-meteorological targets, especially insects."""
+    gf = pyart.correct.GateFilter(radar)
+    gf.exclude_below('DBZH', 10)
+    gf.exclude_above('ZDR', 2, op='and')
+    gf.exclude_below('DBZH', z_min)
+    gf.exclude_below('RHOHV', rhohv_min)
+    return gf
+
+
 def dummy_radar(odimfile, include_fields=['DBZH']):
     """Read minimal data to create a dummy radar object."""
     return pyart.aux_io.read_odim_h5(odimfile, include_datasets=['dataset1'],
