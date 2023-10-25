@@ -1,12 +1,16 @@
 """reading and writing data"""
 import h5py
+import numpy as np
 import pyart.aux_io
 
 
 def read_odim_ml(h5file):
     """Read how/freeze in meters from FMI ODIM HDF5 radar metadata."""
     with h5py.File(h5file) as f:
-        return f['how'].attrs['freeze']*1000
+        h = f['how'].attrs['freeze']*1000
+        if np.isscalar(h):
+            return h
+        return h.flatten()[0]
 
 
 def read_h5(filename, exclude_datasets=['dataset13'], file_field_names=True, **kws):
