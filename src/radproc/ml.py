@@ -99,8 +99,8 @@ def get_peaks(mli, hlim=(0, H_MAX), height=2, width=0, distance=20,
     return peaksi, peaksi.apply(lambda i: list(mli.iloc[i[0]].index))
 
 
-def ml_height(mlis, **kws):
-    """weighted median ML height from ML indicator using peak detection"""
+def ml_h(mlis, **kws):
+    """weighted median ML altitude from ML indicator using peak detection"""
     peaksi, peaks = get_peaks(mlis, **kws)
     if peaks.empty:
         return np.nan
@@ -123,6 +123,14 @@ def _value_at(ind, values):
         return np.nan
 
 
+def _closest_peak(row, target, altitudes):
+    hs = altitudes[row[0]].values
+    idx = min(np.searchsorted(hs, target), hs.size-1)
+    if hs.size > 0:
+        return pd.DataFrame(row[1]).iloc[idx]
+    return pd.Series(index=list(row[1]), data=np.full(len(row[1]), np.nan))
+
+
 def _roundnan(ind, fill_value=-1):
     """round with fill_value on ValueError"""
     try:
@@ -131,29 +139,30 @@ def _roundnan(ind, fill_value=-1):
         return fill_value
 
 
-def limits_peak(peaksi, heights):
+def limits_peak(peaksi, altitudes, mlh):
     """ML height range from MLI peaks"""
     edges = []
+    peaks_props = peaksi.apply(_closest_peak, args=(mlh, altitudes)).T
     for ips_label in ('left_ips', 'right_ips'):
-        ips = get_peaksi_prop(peaksi, ips_label)
-        ilims = ips.apply(_first_or_nan)
+        ilims = peaks_props[ips_label]
         ilims.name = 'gate'
-        lims = ilims.apply(_value_at, args=(heights,))
+        lims = ilims.apply(_value_at, args=(altitudes,))
         lims.name = 'height'
         lims = pd.concat([lims, ilims.apply(_roundnan)], axis=1)
         edges.append(lims)
     return tuple(edges)
 
 
-def ml_limits_raw(mli, ml_max_change=1500, **kws): # free param
+def ml_limits_raw(mli, ml_max_change=1500, mlh=None, **kws): # free param
     """ML height range from ML indicator"""
-    mlh = ml_height(mli)
+    if mlh is None:
+        mlh = ml_h(mli)
     if np.isnan(mlh):
         nans = pd.Series(index=mli.columns, data=np.nan)
         return nans, nans
     peaksi, _ = get_peaks(mli, hlim=(mlh-ml_max_change, mlh+ml_max_change),
                               **kws)
-    return limits_peak(peaksi, mli.index)
+    return limits_peak(peaksi, mli.index, mlh)
 
 
 def fltr_ml_limits(limits, rho):
@@ -174,7 +183,7 @@ def ml_limits(mli, rho, **kws):
         return limdfs
     lims = tuple((df.height for df in limdfs))
     # filter based on rel_height sensitivity
-    lim05dfs = ml_limits_raw(mli, rel_height=0.5) # free param
+    lim05dfs = ml_limits_raw(mli, rel_height=0.5, **kws) # free param
     lims05 = tuple((df.height for df in lim05dfs))
     for lim, lim05 in zip(lims, lims05):
         lim[abs(lim-lim05) > 800] = np.nan # free param
@@ -252,7 +261,8 @@ def ml_ppi(radar, sweep, **kws):
     # On the other hand, filling may produce unwanted extra peaks.
     mlidf = get_field_df(radar, sweep, MLI+FLTRD_SUFFIX).fillna(0)
     rhodf = get_field_df(radar, sweep, RHOHV+FLTRD_SUFFIX)
-    bot, top = ml_limits(mlidf, rhodf, **kws)
+    mlh = np.log(mlidf+1).mean(axis=1).idxmax() # "average ml peak"
+    bot, top = ml_limits(mlidf, rhodf, mlh=mlh, **kws)
     if bot.isna().all():
         nanarr = np.full([bot.size, 2], np.nan)
         nans = pd.DataFrame(nanarr, columns=['height', 'gate'])
