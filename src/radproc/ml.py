@@ -123,6 +123,14 @@ def _value_at(ind, values):
         return np.nan
 
 
+def _closest_peak(row, target, altitudes):
+    hs = altitudes[row[0]].values
+    idx = min(np.searchsorted(hs, target), hs.size-1)
+    if hs.size > 0:
+        return pd.DataFrame(row[1]).iloc[idx]
+    return pd.Series(index=list(row[1]), data=np.full(len(row[1]), np.nan))
+
+
 def _roundnan(ind, fill_value=-1):
     """round with fill_value on ValueError"""
     try:
@@ -131,13 +139,12 @@ def _roundnan(ind, fill_value=-1):
         return fill_value
 
 
-def limits_peak(peaksi, altitudes):
+def limits_peak(peaksi, altitudes, mlh):
     """ML height range from MLI peaks"""
     edges = []
+    peaks_props = peaksi.apply(_closest_peak, args=(mlh, altitudes)).T
     for ips_label in ('left_ips', 'right_ips'):
-        ips = get_peaksi_prop(peaksi, ips_label)
-        # TODO: instead of the first, use nearest to avg ml altitude
-        ilims = ips.apply(_first_or_nan)
+        ilims = peaks_props[ips_label]
         ilims.name = 'gate'
         lims = ilims.apply(_value_at, args=(altitudes,))
         lims.name = 'height'
@@ -155,7 +162,7 @@ def ml_limits_raw(mli, ml_max_change=1500, mlh=None, **kws): # free param
         return nans, nans
     peaksi, _ = get_peaks(mli, hlim=(mlh-ml_max_change, mlh+ml_max_change),
                               **kws)
-    return limits_peak(peaksi, mli.index)
+    return limits_peak(peaksi, mli.index, mlh)
 
 
 def fltr_ml_limits(limits, rho):
