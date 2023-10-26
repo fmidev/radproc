@@ -140,8 +140,12 @@ def _weighted_highest_peak(row, target, altitudes):
         logh = np.log(row[1]['peak_heights'])
         score = weights*logh
         idx = np.argmax(score)
-        return pd.DataFrame(row[1]).iloc[idx]
-    return pd.Series(index=list(row[1]), data=np.full(len(row[1]), np.nan))
+        outrow = pd.DataFrame(row[1]).iloc[idx]
+        outrow['confidence'] = score[idx]
+        return outrow
+    outrow = pd.Series(index=list(row[1]), data=np.full(len(row[1]), np.nan))
+    outrow['confidence'] = np.nan
+    return outrow
 
 
 def _roundnan(ind, fill_value=-1):
@@ -161,7 +165,9 @@ def limits_peak(peaksi, altitudes, mlh):
         ilims.name = 'gate'
         lims = ilims.apply(_value_at, args=(altitudes,))
         lims.name = 'height'
-        lims = pd.concat([lims, ilims.apply(_roundnan)], axis=1)
+        lims = pd.DataFrame(lims)
+        if 'confidence' in peaks_props.columns:
+            lims = pd.concat([lims, peaks_props['confidence']], axis=1)
         edges.append(lims)
     return tuple(edges)
 
@@ -181,25 +187,26 @@ def ml_limits_raw(mli, ml_max_change=1500, mlh=None, **kws): # free param
 def fltr_ml_limits(limits, rho):
     """filter ml range"""
     lims = []
-    for lim in limits:
+    for limdf in limits:
+        lim = limdf['height']
         lim = fltr_rolling_median_thresh(lim, threshold=800) # free param
         lim = fltr_no_hydrometeors(lim, rho)
         lim = lim.rolling(5, center=True, win_type='triang', min_periods=2).mean()
-        lims.append(lim)
+        limdf['height'] = lim
+        lims.append(limdf)
     return lims
 
 
 def ml_limits(mli, rho, **kws):
     """filtered ml bottom and top heights"""
-    limdfs = ml_limits_raw(mli, **kws)
-    if limdfs[0].isna().all().all():
-        return limdfs
-    lims = tuple((df.height for df in limdfs))
+    tolerance = 800 # m; free param
+    lims = ml_limits_raw(mli, **kws)
+    if lims[0].isna().all().all():
+        return lims
     # filter based on rel_height sensitivity
-    lim05dfs = ml_limits_raw(mli, rel_height=0.5, **kws) # free param
-    lims05 = tuple((df.height for df in lim05dfs))
+    lims05 = ml_limits_raw(mli, rel_height=0.5, **kws) # free param
     for lim, lim05 in zip(lims, lims05):
-        lim[abs(lim-lim05) > 800] = np.nan # free param
+        lim[abs(lim['height']-lim05['height']) > tolerance] = np.nan
     return fltr_ml_limits(lims, rho)
 
 
@@ -277,17 +284,19 @@ def ml_ppi(radar, sweep, mlh=None, **kws):
     if mlh is None:
         mlh = np.log(mlidf+1).mean(axis=1).idxmax() # "average ml peak"
     bot, top = ml_limits(mlidf, rhodf, mlh=mlh, **kws)
-    if bot.isna().all():
-        nanarr = np.full([bot.size, 2], np.nan)
-        nans = pd.DataFrame(nanarr, columns=['height', 'gate'])
+    if bot['height'].isna().all():
+        cols = list(bot.columns)+['gate']
+        nanarr = np.full([bot.shape[0], len(cols)], np.nan)
+        nans = pd.DataFrame(nanarr, columns=cols)
         return nans, nans
     lims = {'bottom': bot, 'top': top}
     h = ppi_altitude(radar, sweep)
     ml_smooth = dict()
     for limlabel in lims.keys():
-        limfh = filter_series_skipna(lims[limlabel], uniform_filter, size=30, mode='wrap')
+        limfh = filter_series_skipna(lims[limlabel]['height'], uniform_filter, size=30, mode='wrap')
         limfh.name = 'height'
-        ml_smooth[limlabel] = _edge_gates(limfh, h)
+        df = _edge_gates(limfh, h)
+        ml_smooth[limlabel] = pd.concat([df, lims[limlabel].drop(['height'], axis=1)], axis=1)
     return ml_smooth['bottom'], ml_smooth['top']
 
 

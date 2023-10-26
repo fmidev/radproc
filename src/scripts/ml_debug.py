@@ -10,4 +10,4 @@ if __name__ == '__main__':
     radar = read_h5(inputfile)
     zerolevel = read_odim_ml(inputfile)
     add_mli(radar)
-    ml_field(radar, add_field=True, mlh=zerolevel)
+    ml_field(radar, add_field=True, mlh=zerolevel-250)
