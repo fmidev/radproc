@@ -124,9 +124,22 @@ def _value_at(ind, values):
 
 
 def _closest_peak(row, target, altitudes):
+    """closest peak to target altitude"""
     hs = altitudes[row[0]].values
-    idx = min(np.searchsorted(hs, target), hs.size-1)
     if hs.size > 0:
+        idx = min(np.searchsorted(hs, target), hs.size-1)
+        return pd.DataFrame(row[1]).iloc[idx]
+    return pd.Series(index=list(row[1]), data=np.full(len(row[1]), np.nan))
+
+
+def _weighted_highest_peak(row, target, altitudes):
+    """highest peak weighted by distance from target altitude"""
+    hs = altitudes[row[0]].values
+    if hs.size > 0:
+        weights = 1-abs(hs/target-1)
+        logh = np.log(row[1]['peak_heights'])
+        score = weights*logh
+        idx = np.argmax(score)
         return pd.DataFrame(row[1]).iloc[idx]
     return pd.Series(index=list(row[1]), data=np.full(len(row[1]), np.nan))
 
@@ -142,7 +155,7 @@ def _roundnan(ind, fill_value=-1):
 def limits_peak(peaksi, altitudes, mlh):
     """ML height range from MLI peaks"""
     edges = []
-    peaks_props = peaksi.apply(_closest_peak, args=(mlh, altitudes)).T
+    peaks_props = peaksi.apply(_weighted_highest_peak, args=(mlh, altitudes)).T
     for ips_label in ('left_ips', 'right_ips'):
         ilims = peaks_props[ips_label]
         ilims.name = 'gate'

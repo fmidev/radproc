@@ -80,7 +80,7 @@ def main(inputfile, h5_out, png_dir, analysis_plot):
     """Perform melting layer analysis on INPUTFILE."""
     radar = read_h5(inputfile)
     zerolevel = read_odim_ml(inputfile)
-    ml_guess = zerolevel-250
+    ml_guess = zerolevel-250 # z meters below 0C-level
     add_mli(radar)
     t = generate_radar_time_begin(radar)
     tstamp = t.strftime('%Y%m%d%H%M')
