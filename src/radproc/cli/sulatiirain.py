@@ -33,7 +33,7 @@ def plot_analysis(radar, sweep, zerolevel=-1):
     fmt = FuncFormatter(lambda x, pos: PHASE[list(PHASE.keys())[norm(x)]].long_name)
     kws = dict(sweep=sweep, resolution='50m')
     zkws = dict(vmin=0, vmax=50, cmap='pyart_HomeyerRainbow')
-    fig, ax = canvas(radar, 2, 2, right=0.92)
+    fig, ax = canvas(radar, 3, 2, right=0.92)
     display = pyart.graph.RadarMapDisplay(radar)
     display.plot_ppi_map('DBZH', ax=ax[0,0], title='DBZH', **zkws, **kws)
     display.plot_ppi_map('PCLASS', ax=ax[0,1], title='PCLASS', cmap=cm, norm=norm,
@@ -43,6 +43,8 @@ def plot_analysis(radar, sweep, zerolevel=-1):
     cb = fig.colorbar(ScalarMappable(norm=norm, cmap=cm), ax=ax[0,1], format=fmt, ticks=tickz)
     display.plot_ppi_map('MLI', ax=ax[1,0], vmin=0, vmax=10, title='MLI', **kws)
     display.plot_ppi_map('MLIC', ax=ax[1,1], vmin=0, vmax=10, title='MLIC', **kws)
+    display.plot_ppi_map('MLS', ax=ax[0,2], vmin=0, vmax=2, title='ML confidence', **kws)
+    display.plot_ppi_map('RHOHV', ax=ax[1,2], vmin=0.9, vmax=1, title='RHOHV', **kws)
     if zerolevel>0:
         lat, lon = altitude_ring(radar, sweep, zerolevel)
         for axx in ax.flatten():

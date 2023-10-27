@@ -334,11 +334,14 @@ def ml_grid(radar, sweeps=(2, 3, 4), interpfun=interp_mba, **kws):
 
 def ml_field(radar, add_field=False, **kws):
     include = (2, 3, 4)
-    data = []
+    phasedata = []
+    score = []
     for sweep in radar.sweep_number['data']:
         phase = radar.get_field(sweep, 'DBZH', copy=True).astype(int)
+        confidence = radar.get_field(sweep, 'DBZH', copy=True)
         mask = phase.mask.copy()
         phase.fill(0)
+        confidence.fill(0)
         if sweep in include:
             bot, top = ml_ppi(radar, sweep, **kws)
             for (i, botgate), (_, topgate) in zip(bot['gate'].items(), top['gate'].items()):
@@ -348,11 +351,16 @@ def ml_field(radar, add_field=False, **kws):
                 phase[i, :botgate] = PHASE['RAIN'].value
                 phase[i, botgate:topgate] = PHASE['WETSNOW'].value
                 phase[i, topgate:] = PHASE['DRYSNOW'].value
+                confidence[i, :] = bot['confidence'][i]
         else:
             phase[~mask] = PHASE['UNDET'].value
         phase.mask = mask # restore original mask
-        data.append(phase)
-    pphase = dict(data=np.ma.concatenate(data))
+        confidence.mask = mask
+        phasedata.append(phase)
+        score.append(confidence)
+    phase_field = dict(data=np.ma.concatenate(phasedata))
+    score_field = dict(data=np.ma.concatenate(score))
     if add_field:
-        radar.add_field('PCLASS', pphase)
-    return pphase
+        radar.add_field('PCLASS', phase_field)
+        radar.add_field('MLS', score_field)
+    return phase_field, score_field
