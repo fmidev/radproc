@@ -302,14 +302,12 @@ def ml_ppi(radar, sweep, mlh=None, **kws):
 
 def ml_grid(radar, sweeps=(2, 3, 4), interpfun=interp_mba, **kws):
     """melting layer height as a grid from a volume scan"""
-    # lower threshold when closer to radar (higher elevation)
-    max_h_change = {2: 800, 3: 300, 4: 200} # TODO these are from the sleeve
     xys = dict(bottom=[], top=[])
     zs = dict(bottom=[], top=[])
     v = dict()
     all_lims = {}
     for sweep in sweeps:
-        bot, top = ml_ppi(radar, sweep, ml_max_change=max_h_change[sweep])
+        bot, top = ml_ppi(radar, sweep, ml_max_change=1000)
         if bot.isna().all().all():
             continue
         lims = {'bottom': bot, 'top': top}
