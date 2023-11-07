@@ -62,27 +62,32 @@ def plot_analysis(radar, sweep, zerolevel=-1):
     return fig, ax
 
 
-def plot_ml(radar, png_dir, tstamp, site):
+def plot_ml(radar, tstamp, site, png_dir=None):
     bot, top, lims = ml_grid(radar, resolution=50)
     topbot = {'top': top, 'bottom': bot}
     for key, value in topbot.items():
         fig, ax = plot_ml_boundary_level(value)
         plot_detected_ml_bounds(radar, lims, ax, boundkey=key)
         ax.set_title('Melting layer '+key)
-        figfile = os.path.join(png_dir, f"{tstamp}{site}_{key}.png")
-        fig.savefig(figfile)
+        if png_dir:
+            figfile = os.path.join(png_dir, f"{tstamp}{site}_{key}.png")
+            fig.savefig(figfile)
+        else:
+            plt.show()
 
 
 @click.command()
 @click.argument('inputfile', type=click.Path(exists=True, dir_okay=False,
                                              readable=True))
 @click.option('-o', '--h5-out', metavar='PATH', help=_out_help())
+@click.option('--grid-plot', help='visualize ML grid fitting', is_flag=True,
+              default=False)
 @click.option('--analysis-plot', help='visualize analysis for SWEEP',
               metavar='SWEEP', default=0)
 @click.option('--png-dir', metavar='DIR',
               help='optional PNG figure output directory')
 @click.version_option(version=__version__, prog_name='sulatiirain')
-def main(inputfile, h5_out, png_dir, analysis_plot):
+def main(inputfile, h5_out, png_dir, grid_plot, analysis_plot):
     """Perform melting layer analysis on INPUTFILE."""
     radar = read_h5(inputfile)
     zerolevel = read_odim_ml(inputfile)
@@ -95,9 +100,12 @@ def main(inputfile, h5_out, png_dir, analysis_plot):
         ml_field(radar, add_field=True, mlh=ml_guess)
         h5out = h5_out.format(timestamp=tstamp, site=site)
         write_h5(radar, h5out, inputfile=inputfile)
-    if png_dir:
-        plot_ml(radar, png_dir, tstamp, site)
+    if grid_plot:
+        plot_ml(radar, tstamp, site, png_dir)
     if analysis_plot:
         ml_field(radar, add_field=True, mlh=ml_guess)
         fig, axarr = plot_analysis(radar, analysis_plot, zerolevel)
-        plt.show()
+        if png_dir:
+            fig.savefig(os.path.join(png_dir, f'{tstamp}{site}_analysis.png'))
+        else:
+            plt.show()
