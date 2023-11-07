@@ -7,6 +7,9 @@ from matplotlib.ticker import MaxNLocator
 import cartopy.crs as ccrs
 
 
+from radproc.radar import get_gate_altitude
+
+
 def canvas(radar, *colsrows, target_resolution=(1920, 1080), left=0, right=1):
     figsize = np.multiply(colsrows, (6,5))
     dpi = np.divide(target_resolution, figsize).min()
@@ -19,7 +22,7 @@ def canvas(radar, *colsrows, target_resolution=(1920, 1080), left=0, right=1):
     return fig, ax
 
 
-def plot_pseudo_rhi(radar, what='reflectivity_horizontal', direction=270, **kws):
+def plot_pseudo_rhi(radar, what='DBZH', direction=270, **kws):
     """Plot a radial cross section from a volume scan."""
     fig, ax = plt.subplots()
     xsect = pyart.util.cross_section_ppi(radar, [direction])
@@ -30,7 +33,7 @@ def plot_pseudo_rhi(radar, what='reflectivity_horizontal', direction=270, **kws)
     return ax
 
 
-def plot_ppi(radar, sweep=0, what='reflectivity_horizontal', r_km=120,
+def plot_ppi(radar, sweep=0, what='DBZH', r_km=120,
              title_flag=False, **kws):
     """Plot a single elevation PPI from a volume scan."""
     fig, ax = plt.subplots()
@@ -71,3 +74,8 @@ def plot_detected_ml_bounds(radar, bounds, ax, boundkey='top'):
     """Plot a dictionary of melting layer boundaries as detected from radar."""
     for sweep, d in bounds.items():
         plot_edge(radar, sweep, d[boundkey], ax, color='black')
+
+
+def coord_altitude(radar, sweep, x, y):
+    alt = get_gate_altitude(radar, sweep, x, y)
+    return f'x={x:.1f}, y={y:.1f}, altitude={alt:.1f}m'

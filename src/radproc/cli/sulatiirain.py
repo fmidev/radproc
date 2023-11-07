@@ -1,4 +1,5 @@
 import os
+from functools import partial
 
 import click
 from pyart.graph.common import generate_radar_time_begin
@@ -14,7 +15,8 @@ from radproc.visual import canvas
 from radproc.radar import altitude_ring
 from radproc.io import read_h5, write_h5, read_odim_ml
 from radproc.ml import add_mli, ml_grid, ml_field, PHASE
-from radproc.visual import plot_ml_boundary_level, plot_detected_ml_bounds
+from radproc.visual import (plot_ml_boundary_level, plot_detected_ml_bounds,
+                            coord_altitude)
 from radproc.tools import source2dict
 from radproc._version import __version__
 
@@ -43,7 +45,8 @@ def plot_analysis(radar, sweep, zerolevel=-1):
     cb = fig.colorbar(ScalarMappable(norm=norm, cmap=cm), ax=ax[0,1], format=fmt, ticks=tickz)
     display.plot_ppi_map('MLI', ax=ax[1,0], vmin=0, vmax=10, title='MLI', **kws)
     display.plot_ppi_map('MLIC', ax=ax[1,1], vmin=0, vmax=10, title='MLIC', **kws)
-    display.plot_ppi_map('MLS', ax=ax[0,2], vmin=0, vmax=2, title='ML confidence', **kws)
+    display.plot_ppi_map('MLS', ax=ax[0,2], vmin=0, vmax=2, title='ML confidence',
+                         cmap='cubehelix_r', **kws)
     display.plot_ppi_map('RHOHV', ax=ax[1,2], vmin=0.9, vmax=1, title='RHOHV', **kws)
     if zerolevel>0:
         lat, lon = altitude_ring(radar, sweep, zerolevel)
@@ -55,6 +58,7 @@ def plot_analysis(radar, sweep, zerolevel=-1):
             axx.set_ylim(*ylim)
             axx.plot(lon, lat, transform=ccrs.Geodetic(), color='xkcd:eggplant',
                      linewidth=0.8, label='how/freeze')
+            axx.format_coord = partial(coord_altitude, radar, sweep)
     return fig, ax
 
 
