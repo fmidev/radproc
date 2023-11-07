@@ -2,6 +2,7 @@
 import h5py
 import numpy as np
 import pyart.aux_io
+from pyart.core import Radar
 
 
 def read_odim_ml(h5file):
@@ -13,7 +14,8 @@ def read_odim_ml(h5file):
         return h.flatten()[0]
 
 
-def read_h5(filename, exclude_datasets=['dataset13'], file_field_names=True, **kws):
+def read_h5(filename: str, exclude_datasets=['dataset13'], file_field_names=True,
+            **kws) -> Radar:
     """pyart read_odim_h5 wrapper
 
     Currently, pyart only supports uniform binsize for odim h5.
@@ -36,7 +38,7 @@ def read_h5(filename, exclude_datasets=['dataset13'], file_field_names=True, **k
                 continue
 
 
-def write_h5(radar, outfile, inputfile='', **kws):
+def write_h5(radar: Radar, outfile: str, inputfile='', **kws):
     """pyart write_odim_h5 wrapper"""
     pyart.aux_io.write_odim_h5(outfile, radar, **kws)
     if inputfile:

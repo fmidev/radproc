@@ -48,24 +48,24 @@ def get_gate_altitude(radar: Radar, sweep: int, x: float, y: float,
     return gate_z[idx]
 
 
-def ppi_altitude(radar, sweep):
+def ppi_altitude(radar: Radar, sweep: int):
     """1D altitude vector along ray from PPI"""
     return radar.get_gate_lat_lon_alt(sweep)[2][1]
 
 
-def get_field_df(radar, sweep, fieldname):
+def get_field_df(radar: Radar, sweep: int, fieldname: str) -> pd.DataFrame:
     """radar field as DataFrame"""
     field = radar.get_field(sweep, fieldname)
     return pd.DataFrame(field.T, index=ppi_altitude(radar, sweep))
 
 
-def zgates_per_sweep(radar, zlim=650):
+def zgates_per_sweep(radar: Radar, zlim=650):
     """how many gates until reaching zlim meters above radar for each sweep"""
     sweeps = radar.sweep_number['data']
     return [(radar.get_gate_x_y_z(n)[2][0]<zlim).sum() for n in sweeps]
 
 
-def z_r_qpe(radar, dbz_field=ZH, lwe_field=LWE, add_field=True):
+def z_r_qpe(radar: Radar, dbz_field=ZH, lwe_field=LWE, add_field=True):
     """Add precipitation rate field to radar using r(z) relation."""
     dbz = radar.get_field(0, dbz_field)
     z = db2lin(dbz)
@@ -76,14 +76,14 @@ def z_r_qpe(radar, dbz_field=ZH, lwe_field=LWE, add_field=True):
     return rfield
 
 
-def altitude_ring(radar, sweep, altitude):
+def altitude_ring(radar: Radar, sweep: int, altitude):
     """coordinates of a constant altitude ring for a given sweep"""
     lat, lon, alt = radar.get_gate_lat_lon_alt(sweep)
     idx = np.searchsorted(alt[0], altitude)
     return lat[:, idx], lon[:, idx]
 
 
-def pyart_aeqd(radar):
+def pyart_aeqd(radar: Radar):
     """radar default projection definition as dictionary"""
     lat = radar.latitude['data'][0]
     lon = radar.longitude['data'][0]
@@ -93,7 +93,7 @@ def pyart_aeqd(radar):
     return dict(proj='aeqd', lat_0=lat, lon_0=lon, R=6370997)
 
 
-def nonmet_filter(radar, rhohv_min=0.7, z_min=0.1):
+def nonmet_filter(radar: Radar, rhohv_min=0.7, z_min=0.1):
     """GateFilter for some non-meteorological targets, especially insects."""
     gf = pyart.correct.GateFilter(radar)
     gf.exclude_below('DBZH', 10)
@@ -103,7 +103,7 @@ def nonmet_filter(radar, rhohv_min=0.7, z_min=0.1):
     return gf
 
 
-def dummy_radar(odimfile, include_fields=['DBZH']):
+def dummy_radar(odimfile: str, include_fields=['DBZH']) -> Radar:
     """Read minimal data to create a dummy radar object."""
     return pyart.aux_io.read_odim_h5(odimfile, include_datasets=['dataset1'],
                                      file_field_names=True,
