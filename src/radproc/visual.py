@@ -76,6 +76,9 @@ def plot_detected_ml_bounds(radar, bounds, ax, boundkey='top'):
         plot_edge(radar, sweep, d[boundkey], ax, color='black')
 
 
-def coord_altitude(radar, sweep, x, y):
+def coord_altitude(radar, sweep, x, y, xy_in_km=False):
+    if xy_in_km: # convert to meters
+        x *= 1000
+        y *= 1000
     alt = get_gate_altitude(radar, sweep, x, y)
     return f'x={x:.1f}, y={y:.1f}, altitude={alt:.1f}m'

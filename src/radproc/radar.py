@@ -12,38 +12,40 @@ from radproc.math import db2lin
 PYART_AEQD_FMT = '+proj={proj} +lon_0={lon_0} +lat_0={lat_0} +R={R}'
 
 
-def get_gate_altitude(radar: Radar, sweep: int, x: float, y: float, km=False) -> float:
+def get_gate_altitude(radar: Radar, sweep: int, x: float, y: float,
+                      asl=False) -> float:
     """
-    Calculate the altitude of the closest gate to the specified (x,y) coordinates.
+    Get the altitude of the closest gate to the specified (x,y) coordinates.
 
     Parameters
     ----------
     radar : Radar
-        Radar object.
+        Radar object
     sweep : int
-        Sweep number.
+        Sweep number
     x : float
-        x coordinate.
+        x coordinate in meters
     y : float
-        y coordinate.
+        y coordinate in meters
+    asl: bool
+        Set to True to measure altitude from the sea level. Otherwise it is
+        measured from the radar antenna level.
 
     Returns
     -------
     float
         Altitude of the closest gate in meters.
     """
-    if km: # Convert x and y to meters
-        x *= 1000
-        y *= 1000
     # Get gate coordinates
-    gate_x, gate_y, _ = radar.get_gate_x_y_z(sweep)
-    _, _, gate_alt = radar.get_gate_lat_lon_alt(sweep)
+    gate_x, gate_y, gate_z = radar.get_gate_x_y_z(sweep)
+    if asl:
+        _, _, gate_z = radar.get_gate_lat_lon_alt(sweep)
     # Calculate the distance from the radar to each gate
     dist = np.sqrt((gate_x - x)**2 + (gate_y - y)**2)
     # Find the index of the gate closest to the specified (x,y)
     idx = np.unravel_index(np.argmin(dist, axis=None), dist.shape)
     # Return the altitude of the closest gate
-    return gate_alt[idx]
+    return gate_z[idx]
 
 
 def ppi_altitude(radar, sweep):

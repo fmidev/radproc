@@ -25,4 +25,4 @@ if __name__ == '__main__':
     r_km = 100
     ppi.set_aspect_ratio(1, ax=ax)
     ppi.set_limits(xlim=(-r_km, r_km), ylim=(-r_km, r_km), ax=ax)
-    ax.format_coord = partial(coord_altitude, radar, sweep)
+    ax.format_coord = partial(coord_altitude, radar, sweep, xy_in_km=True)
