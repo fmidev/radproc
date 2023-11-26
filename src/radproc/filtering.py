@@ -181,7 +181,7 @@ def filter_series_skipna(s, filterfun, **kws):
     return df
 
 
-def _ma_filter(field_data, filterfun=median_filter, **kws):
+def ma_filter(field_data, filterfun=median_filter, **kws):
     """Apply filterfun to a masked array retaining mask."""
     filtered = filterfun(field_data, **kws)
     if isinstance(filtered, np.ma.core.MaskedArray):
@@ -206,7 +206,7 @@ def filter_field(radar, existing_field_name, field_name=None, filled=False,
             zkw = {}
         else:
             zkw = {zgate_kw: zgates[n]}
-        data.append(_ma_filter(sdata, **zkw, **kws))
+        data.append(ma_filter(sdata, **zkw, **kws))
     filtered = np.ma.concatenate(data)
     if not filtered.mask.any():
         filtered = np.ma.array(filtered, mask=radar.fields[existing_field_name]['data'].mask)
