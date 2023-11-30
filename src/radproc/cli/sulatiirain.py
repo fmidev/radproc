@@ -18,13 +18,24 @@ from radproc.ml import add_mli, ml_grid, ml_field, PHASE
 from radproc.visual import (plot_ml_boundary_level, plot_detected_ml_bounds,
                             coord_altitude)
 from radproc.tools import source2dict
+from radproc.cli import gen_help
 from radproc._version import __version__
+
+
+ML_FIELDS = {'PCLASS': ('Echo classification based on ML detection. '
+                        'Only performed on a subset of elevation sweeps. '
+                        'Assumes the radar is below the bottom of ML. '),
+             'MLI': ('Melting layer indicator. '
+                     'A band of elevated values indicates melting. '),
+             'MLIC': 'Smoothed MLI. Peak detection is performed on this product.',
+             'MLS': 'Detection confidence of each ray.'}
 
 
 def _out_help():
     base = ('Output HDF5 file PATH. '
-            'Special variables {timestamp} and {site} are available. ')
-    return base
+            'Special variables {timestamp} and {site} are available. '
+            'The following variables are added:')
+    return gen_help(base, ML_FIELDS)
 
 
 def plot_analysis(radar, sweep, zerolevel=-1):
@@ -88,7 +99,10 @@ def plot_ml(radar, tstamp, site, png_dir=None):
               help='optional PNG figure output directory')
 @click.version_option(version=__version__, prog_name='sulatiirain')
 def main(inputfile, h5_out, png_dir, grid_plot, analysis_plot):
-    """Perform melting layer analysis on INPUTFILE."""
+    """Perform melting layer analysis on INPUTFILE.
+
+    The analysis is based on peak detection on a combination of DBZ, ZDR and PHIDP.
+    The method is created by Jussi Tiira <jussi.tiira@fmi.fi>."""
     radar = read_h5(inputfile)
     zerolevel = read_odim_ml(inputfile)
     ml_guess = zerolevel-250 # z meters below 0C-level
