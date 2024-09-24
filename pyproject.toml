@@ -27,7 +27,7 @@ ml = [
   "mba @ git+https://github.com/ddemidov/mba.git",
 ]
 arm = [
-  "arm_pyart",
+  "arm_pyart==1.18.*",
 ]
 mch = [
   #"pyart_mch",
