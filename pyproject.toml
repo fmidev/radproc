@@ -11,7 +11,7 @@ authors = [
   {name = "Jussi Tiira", email = "jussi.tiira@fmi.fi"},
 ]
 keywords = ["meteorology", "weather radar", "precipitation"]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
   "scipy",
   "pandas",
@@ -27,7 +27,7 @@ ml = [
   "mba @ git+https://github.com/ddemidov/mba.git",
 ]
 arm = [
-  "arm_pyart",
+  "arm_pyart>=1.19.3",
 ]
 mch = [
   #"pyart_mch",
