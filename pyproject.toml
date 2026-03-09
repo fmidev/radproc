@@ -21,6 +21,14 @@ dependencies = [
   "cartopy",
 ]
 dynamic = ["version"]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+source = "https://github.com/juhi24/radproc"
 
 [project.optional-dependencies]
 ml = [

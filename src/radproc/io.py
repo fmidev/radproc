@@ -14,6 +14,15 @@ def read_odim_ml(h5file):
         return h.flatten()[0]
 
 
+def read_odim_phidp_base(h5file) -> float:
+    """Read how/phasediff from FMI ODIM HDF5 radar metadata."""
+    with h5py.File(h5file) as f:
+        phi = f['how'].attrs['phasediff']
+        if np.isscalar(phi):
+            return phi
+        return phi.flatten()[0]
+
+
 def read_h5(filename: str, exclude_datasets=['dataset13'], file_field_names=True,
             **kws) -> Radar:
     """pyart read_odim_h5 wrapper
