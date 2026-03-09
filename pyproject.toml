@@ -38,8 +38,8 @@ arm = [
   "arm_pyart>=1.19.3",
 ]
 mch = [
-  #"pyart_mch",
-  "pyart_mch @ git+https://github.com/MeteoSwiss/pyart.git",
+  "pyart_mch",
+  #"pyart_mch @ git+https://github.com/MeteoSwiss/pyart.git",
 ]
 dynamics = [
   "pysteps"
